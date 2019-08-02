@@ -1,0 +1,67 @@
+1.使用top指令查看当前进程情况
+
+ PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND 
+ 977 tomcat    20   0 7146m 3.7g  13m S 153.8 23.8  30:40.96 java                                                                                                                                                                                                
+ 1059 tomcat    20   0 7101m 3.6g  13m S 151.2 23.1  34:06.30 java                                                                                                                                                                                                
+ 1018 tomcat    20   0 7085m 3.6g  13m S 91.4 23.0  40:46.92 java      
+ 
+2.得到cpu飙高的进程号为977，查看977的线程列表
+	top -Hp 977
+
+   PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND 
+   984 tomcat    20   0 7146m 3.7g  13m S 29.6 23.8   2:02.35 java                                                                                                                                                                                               
+  983 tomcat    20   0 7146m 3.7g  13m S 28.6 23.8   2:02.68 java                                                                                                                                                                                                
+  985 tomcat    20   0 7146m 3.7g  13m S 27.3 23.8   2:04.26 java                                                                                                                                                                                                
+  986 tomcat    20   0 7146m 3.7g  13m S 25.6 23.8   2:01.08 java 
+  
+3.将线程号984转换为二进制
+	printf "%x\n" 984
+
+	3d8
+
+4.查询进程977下的线程为3d8的堆栈信息
+	jstack 977 | grep 3d8
+	
+	如下为四个cpu飙高的线程的异常堆栈信息：
+	"GC task thread#0 (ParallelGC)" os_prio=0 tid=0x00007f8d7c01e000 nid=0x3d7 runnable 
+
+	"GC task thread#1 (ParallelGC)" os_prio=0 tid=0x00007f8d7c020000 nid=0x3d8 runnable 
+
+	"GC task thread#2 (ParallelGC)" os_prio=0 tid=0x00007f8d7c021800 nid=0x3d9 runnable 
+
+	"GC task thread#3 (ParallelGC)" os_prio=0 tid=0x00007f8d7c023800 nid=0x3da runnable 
+ 
+5.如上为GC占用的cpu资源，因此需要查看一下GC流程
+	jstat -gc 977 2000   每隔两秒打印一次各内存区域的容量信息
+	
+	 S0C    S1C    S0U    S1U      EC       EU        OC         OU       MC     MU    CCSC   CCSU   YGC     YGCT    FGC    FGCT     GCT   
+8704.0 8704.0  0.0   6784.1 1074688.0 918375.0 2184704.0  1209901.1  97152.0 86354.4 11136.0 9313.1   3657   51.552   3      0.854   52.406
+8704.0 8704.0  0.0   6784.1 1074688.0 935250.3 2184704.0  1209901.1  97152.0 86354.4 11136.0 9313.1   3657   51.552   3      0.854   52.406
+8704.0 8704.0  0.0   6784.1 1074688.0 947063.7 2184704.0  1209901.1  97152.0 86354.4 11136.0 9313.1   3657   51.552   3      0.854   52.406
+
+如下介绍来自网络：
+作者：厚积_薄发 
+来源：CSDN 
+原文：https://blog.csdn.net/yuxin6866/article/details/77718748 
+--------------------------------------------
+S0C：年轻代中第一个survivor（幸存区）的容量 (kb)
+S1C：年轻代中第二个survivor（幸存区）的容量 (kb)
+S0U：年轻代中第一个survivor（幸存区）目前已使用空间 (kb)
+S1U：年轻代中第二个survivor（幸存区）目前已使用空间 (kb)
+EC：年轻代中Eden（伊甸园）的容量 (kb)
+EU：年轻代中Eden（伊甸园）目前已使用空间 (kb)
+OC：Old代的容量 (kb)
+OU：Old代目前已使用空间 (kb)
+PC：Perm(持久代)的容量 (kb)
+PU：Perm(持久代)目前已使用空间 (kb)
+YGC：从应用程序启动到采样时年轻代中gc次数
+YGCT：从应用程序启动到采样时年轻代中gc所用时间(s)
+FGC：从应用程序启动到采样时old代(全gc)gc次数
+FGCT：从应用程序启动到采样时old代(全gc)gc所用时间(s)
+GCT：从应用程序启动到采样时gc用的总时间(s)
+--------------------------------------------- 
+
+6.也可以使用jmap查看内存中对象信息
+	jmap -dump:file=./xx.hprof 984
+	生成hprof文件后，使用jdk字段的visualvm.exe工具查看对象信息，确定问题
+
