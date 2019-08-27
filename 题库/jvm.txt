@@ -187,9 +187,12 @@ JVM课程学习
 								则发生 Handle Promotion Failure情况，进行Full GC；
 			如果小于平均大小，则Full GC;
 		b.如果没有此配置，则直接进行Full GC，腾出空间后执行Minor GC;
-21.Full GC触发时机
+21.Full GC触发时机 
 	1）Minor GC发生前，未配置空间分配担保策略，年轻代对象大小大于老年代剩余空间；
-	2）Minor GC发生后，存活对象大小大于老年代剩余空间大小。
+	2）Minor GC发生前，开启了空间担保策略，但是新生代对象大于历次Minor GC移入老年代的平均对象大小；
+	3）Minor GC发生后，存活对象大小大于老年代剩余空间大小。
+	4）如果使用的是CMS垃圾回收器，-XX:CMSInitiatingOccupancyFaction
+		当老年代达到如上配置的阈值时，会自动触发Full GC。  （--024节补充）
 22.老年代垃圾回收算法
 	标记整理算法
 	1）标记存活对象
@@ -236,7 +239,7 @@ JVM课程学习
 023
 31.CMS垃圾收集器基本原理-老年代垃圾收集器
 	标记-清理算法
-	缺点：造成很多内存碎片
+	缺点：造成很多内存碎片  （--见024）
 32.CMS垃圾收集器执行流程
 	1）初始标记  stop the world 
 		只标记GC roots直接引用的对象
@@ -251,6 +254,30 @@ JVM课程学习
 	最耗时的部分是：并发标记-需要对所有初始标记未被标记的对象进行标记
 					并发清理-需要对所有标记为垃圾的对象进行清理
 			但是都是并发进行的，因此对系统影响并不大。
+			
+024
+33.CMS存在的问题
+	1.造成CPU资源紧张
+		并发标记和并发清理时，默认的垃圾回收线程为（CPU核数+3）/4
+		例：2核CPU，CMS会启动 （2+3）/4 = 1个线程回收垃圾
+	2.Concurrent mode failure问题
+		浮动垃圾：并发清理阶段，仍然会有对象进入老年代，并在短时间内成为垃圾对象
+			而这些垃圾对象未被标记，需要等下次Full GC才会被回收。
+		如果CMS期间，进入老年代的对象大于了所剩空间，则会发生Concurrent Mode Failure问题，
+			此时会自动用 Serial Old 垃圾收集器代替CMS，强行stop the world，不再产生新的对象
+			使用单线程继续回收垃圾对象。	
+			
+		为了保证CMS垃圾回收期间，还有足够的空间可以让一些对象进入老年代，
+			老年代会预留一部分空间，即老年代达到某个阈值时也会自动触发CMS。（触发Full GC）
+			-XX:CMSInitiatingOccupancyFaction 配置阈值，1.6默认为92%
+
+	3.内存碎片问题
+		并发清理会产生很多碎片，因此Full GC后会有内存碎片整理。
+		-XX:+UseCMSCompactAtFullCollection 默认打开  表示会CMS会进行内存碎片整理。
+		-XX:CMSFullGCsBeforeCompact  默认为0， 表示每次Full GC后都会进行碎片整理
+	
+	因此完整的CMS流程为：
+		初始标记-并发标记-重新标记-并发清理---[启用Serial Old，stop the world]-碎片整理
 		
 	
 	
