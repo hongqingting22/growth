@@ -175,7 +175,7 @@ JVM课程学习
 		-XX:PretenureSizeThreshold 配置大对象的大小
 	4）Minor GC存活的对象超过了survivor区大小，则直接进入老年代
 20.老年代空间分配担保规则
-	开启：-XX:+HandlePromotionFailure
+	开启：-XX:+HandlePromotionFailure  （1.6之后被废弃）
 	关闭：-XX:-HandlePromotionFailure
 	1）Minor GC时，老年代会进行一次判断，判断老年代剩余空间是否大于新生代对象大小；
 	2）如果小于新生代对象大小，则先检查配置 -XX:+HandlePromotionFailure;
@@ -187,6 +187,11 @@ JVM课程学习
 								则发生 Handle Promotion Failure情况，进行Full GC；
 			如果小于平均大小，则Full GC;
 		b.如果没有此配置，则直接进行Full GC，腾出空间后执行Minor GC;
+		
+		1.6之后被废弃：
+		老年代剩余空间大于新生代对象大小
+		或老年代剩余空间大于历次Minor GC进入老年代对象的平均大小
+		即可进行Minor GC。
 21.Full GC触发时机 
 	1）Minor GC发生前，未配置空间分配担保策略，年轻代对象大小大于老年代剩余空间；
 	2）Minor GC发生前，开启了空间担保策略，但是新生代对象大于历次Minor GC移入老年代的平均对象大小；
@@ -278,6 +283,45 @@ JVM课程学习
 	
 	因此完整的CMS流程为：
 		初始标记-并发标记-重新标记-并发清理---[启用Serial Old，stop the world]-碎片整理
+	
+	CMS垃圾回收器参数配置：
+	-XX:CMSInitiatingOccupancyFaction  老年代达到多大空间占用时，自动触发Full GC 
+	-XX:+UseCMSCompactAtFullCollection  Full GC之后是否进行碎片整理  默认开启
+	-XX:CMSFullGCsBeforeCompact  多少次Full GC之后进行碎片整理  默认0，即每次
+
+025
+34.总结一次电商订单系统的JVM配置
+	使用4核8G服务器，分配给JVM内存空间为4G，堆内存可以是3G
+	-Xms3072M -Xmx3072M
+	方法区256M
+	-XX:PermSize=256M -XX:MaxPermSize=256M
+	栈空间大小1M
+	-Xss1M
+	分析可得高并发情况下，会在短时间内产生大量对象，并在短时间内迅速变为垃圾对象。
+		因此较短时间内就会造成新生代空间不足，导致Minor GC
+		考虑到对象存活的时间周期都较短，大部分不可能经过15次Minor GC之后仍然存活，
+		即通过此方法进入老年代可能性较低，因此需要保证有足够的survivor空间，
+		以防Minor GC后存活对象大于survivor区大小，或在survivor对象大于空间50%，而直接进入老年代。
+		根据如上特点分析，可以将老年代设置小空间，增大survivor。
+	-Xmn2048 -XX:SurvivorRatio=8
+	对象活过几次Minor GC进入老年代：
+		以本案例来看，由于大部分对象是迅速死亡，经过15次仍然存活的只能是类似@Controller等类对象，
+		因此可以设置更小的阈值，让此类对象尽快进入老年代，而不占用新生代空间。
+	-XX:MaxTenuringThreshold=5
+	大对象直接进入老年代：
+	-XX:PretenureSizeThreshold=1M
+	使用parNew和CMS垃圾回收器
+	-XX:+UseParNewGC
+	-XX:+UseConcMarkSweepGC
+	
+	-Xms3072M -Xmx3072M -Xmn2048M -XX:SurvivorRatio=8 -Xss1M -XX:PermSize=256M -XX:MaxPermSize=256M
+	-XX:PretenureSizeThreshold=1M -XX:MaxTenuringThreshold=5
+	-XX:+UseParNewGC -XX:+UseConcMarkSweepGC
+	
+	总结：
+		如果对象会迅速创建，并迅速死亡，老年代可以设置小空间，增大survivor区大小，
+			减小进入老年代的年龄限制。
+
 		
 	
 	
