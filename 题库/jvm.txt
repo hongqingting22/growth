@@ -285,12 +285,14 @@ JVM课程学习
 		初始标记-并发标记-重新标记-并发清理---[启用Serial Old，stop the world]-碎片整理
 	
 	CMS垃圾回收器参数配置：
-	-XX:CMSInitiatingOccupancyFaction  老年代达到多大空间占用时，自动触发Full GC 
+	-XX:CMSInitiatingOccupancyFaction=92  老年代达到多大空间占用时，自动触发Full GC 
 	-XX:+UseCMSCompactAtFullCollection  Full GC之后是否进行碎片整理  默认开启
-	-XX:CMSFullGCsBeforeCompact  多少次Full GC之后进行碎片整理  默认0，即每次
+	-XX:CMSFullGCsBeforeCompact=0  多少次Full GC之后进行碎片整理  默认0，即每次
 
 025
 34.总结一次电商订单系统的JVM配置
+	下单高峰期，一秒钟300个订单，产生60M对象，并瞬间成为垃圾对象
+	
 	使用4核8G服务器，分配给JVM内存空间为4G，堆内存可以是3G
 	-Xms3072M -Xmx3072M
 	方法区256M
@@ -322,7 +324,6 @@ JVM课程学习
 		如果对象会迅速创建，并迅速死亡，老年代可以设置小空间，增大survivor区大小，
 			减小进入老年代的年龄限制。
 
-		
 	
 	
 	
