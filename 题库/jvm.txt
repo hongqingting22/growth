@@ -126,6 +126,8 @@ JVM课程学习
 009
 12.新生代垃圾回收的时机（Minor GC 或 Young GC）
 	分配新对象时，发现新生代内存空间不足，就会触发一次垃圾回收。
+	第一次：Eden区空间不足
+	之后：Eden+其中一个survivor空间不足
 13.老年代对象的由来--（见19）
 	当新生代对象经过了15次垃圾回收，仍然存活的时候，就会被转移到老年代中。
 
@@ -199,7 +201,7 @@ JVM课程学习
 	4）如果使用的是CMS垃圾回收器，-XX:CMSInitiatingOccupancyFaction
 		当老年代达到如上配置的阈值时，会自动触发Full GC。  （--024节补充）
 22.老年代垃圾回收算法
-	标记整理算法
+	标记清理算法
 	1）标记存活对象
 	2）移动存活对象，避免内存碎片
 	3）将垃圾对象清空
@@ -324,6 +326,40 @@ JVM课程学习
 		如果对象会迅速创建，并迅速死亡，老年代可以设置小空间，增大survivor区大小，
 			减小进入老年代的年龄限制。
 
+
+第五章
+029
+35.G1垃圾收集器概述
+	1）将内存区域划分为多个大小相等的Region
+	2）可设置垃圾回收预期停顿时长  -XX:MaxGCPauseMills  最大停顿时长，默认为200ms
+		回收价值：以最少的时间，回收最多的空间
+
+030
+36.内存中有多少个Region，每个Region有多大
+	依然使用-Xms -Xmx设置内存大小
+	-XX:UseG1GC  使用G1垃圾回收器
+	默认有2048个Region（最多），Region大小=堆内存大小/2048
+	每个Region必须是2的倍数
+	-XX:G1HeapRegionSize  设置Region大小
+37.G1区域划分
+	初始新生代占比为 5%  -XX:G1NewSizePercent=5%
+	系统运行过程，新生代的Region会增多，最多不会超过60%
+	-XX:G1MaxNewSizePercent  设置新生代最多的Region比例
+	垃圾回收时，新生代Region还会减少，Region属于新生代还是老年代是动态的。
+	
+	新生代划分：
+	-XX:SurvivorRatio=8  设置Eden和Survivor的比例，默认8:1:1
+	
+	新生代Region空间达到预设的60%时，就会触发Minor GC
+		也同样需要“stop the world”，采用复制算法，将存活对象由Eden的Region，转移到Survivor的Region。
+38.对象什么时候进入老年代
+	1）-XX:MaxTenuringThreshold  设置最大存活年龄  达到这个年龄进入老年代
+	2）动态年龄判断  存活对象超过survivor50%时，超龄的对象进入老年代
+39.大对象Region
+	默认超过Region空间50%大小的对象，成为大对象，大对象进入大对象Region
+	并跟随新生代，老年代回收时，一并回收大对象。
+	
+	
 	
 	
 	
