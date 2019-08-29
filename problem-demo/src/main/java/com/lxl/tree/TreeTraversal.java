@@ -97,4 +97,9 @@ public class TreeTraversal {
         }
 
     }
+
+    public static void main(String[] args) {
+        String str = "fdsfdsf:fdsfds";
+        System.out.println(str.contains(":"));
+    }
 }
