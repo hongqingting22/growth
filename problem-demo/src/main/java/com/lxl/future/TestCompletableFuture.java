@@ -9,6 +9,7 @@ public class TestCompletableFuture {
     public static void test1(){
         try {
             List<String> list = new CopyOnWriteArrayList<>();
+            StringBuilder sb = new StringBuilder();
 
             ExecutorService executorService = Executors.newFixedThreadPool(10);
             int num = 100;
@@ -25,8 +26,10 @@ public class TestCompletableFuture {
                     latch.countDown();
                     return "exception";
                 });*/
-                CompletableFuture.supplyAsync(new CalTask(finalI),executorService).whenCompleteAsync((result, e) -> {
+                CompletableFuture.supplyAsync(new CalTask(finalI),executorService)
+                        .whenCompleteAsync((result, e) -> {
                     list.add(result);
+                    sb.append(result);
                     latch.countDown();
                 }).exceptionally((e) -> {
                     latch.countDown();
