@@ -128,6 +128,11 @@ JVM课程学习
 	分配新对象时，发现新生代内存空间不足，就会触发一次垃圾回收。
 	第一次：Eden区空间不足
 	之后：Eden+其中一个survivor空间不足
+	
+	G1垃圾收集器：根据预设的停顿时间，动态的判断Minor GC的时机。
+		比如预设200ms时间，Region只达到10%，并未到达预设值60%，
+		但JVM预测回收时间已经接近200ms，也会进行Minor GC   (--33增加)
+		
 13.老年代对象的由来--（见19）
 	当新生代对象经过了15次垃圾回收，仍然存活的时候，就会被转移到老年代中。
 
@@ -157,6 +162,10 @@ JVM课程学习
 	弱引用：new WeakReference<对象>  会被回收
 	虚引用:PhantomReference
 
+finalize方法
+	对象在被垃圾回收时，如果该对象重写了finalize()方法，会调用该方法，
+		如果此方法中，将自己的实例变量赋值给了某GC Roots，该对象将不会被回收。
+
 016
 17.新生代区域划分
 	Eden区和两个survivor区  80%和10%，10%
@@ -175,7 +184,7 @@ JVM课程学习
 	2）动态年龄判断-规则：年龄1+年龄2+……+年龄n所占用内存大于survivor区50%时，年龄大于n的对象直接进入老年代
 	3）大对象直接进入老年代
 		-XX:PretenureSizeThreshold 配置大对象的大小
-	4）Minor GC存活的对象超过了survivor区大小，则直接进入老年代
+	4）Minor GC存活的对象超过了survivor区大小，小于老年代剩余空间大小，则直接进入老年代
 20.老年代空间分配担保规则
 	开启：-XX:+HandlePromotionFailure  （1.6之后被废弃）
 	关闭：-XX:-HandlePromotionFailure
@@ -190,7 +199,7 @@ JVM课程学习
 			如果小于平均大小，则Full GC;
 		b.如果没有此配置，则直接进行Full GC，腾出空间后执行Minor GC;
 		
-		1.6之后被废弃：
+		1.6之后被废弃：***
 		老年代剩余空间大于新生代对象大小
 		或老年代剩余空间大于历次Minor GC进入老年代对象的平均大小
 		即可进行Minor GC。
@@ -198,8 +207,10 @@ JVM课程学习
 	1）Minor GC发生前，未配置空间分配担保策略，年轻代对象大小大于老年代剩余空间；
 	2）Minor GC发生前，开启了空间担保策略，但是新生代对象大于历次Minor GC移入老年代的平均对象大小；
 	3）Minor GC发生后，存活对象大小大于老年代剩余空间大小。
-	4）如果使用的是CMS垃圾回收器，-XX:CMSInitiatingOccupancyFaction
+	4）如果使用的是CMS垃圾回收器，-XX:CMSInitiatingOccupancyFaction=92%
 		当老年代达到如上配置的阈值时，会自动触发Full GC。  （--024节补充）
+	5）G1垃圾收集器，-XX:InitiatingHeapOccupancyPercent=45%
+		当老年代Region数量达到45%时，触发Mixed GC  (--031补充)
 22.老年代垃圾回收算法
 	标记清理算法
 	1）标记存活对象
@@ -242,6 +253,13 @@ JVM课程学习
 	运行在多核CPU的Linux服务器上，多是服务器模式的；建议采用ParNew作为新生代垃圾回收器
 	客户端模式，大都运行在Windows上，采用单核CPU，
 		如百度网盘等客户端；建议采用Serial最为新生代垃圾回收器
+
+ParNew垃圾收集器
+	新生代，多线程垃圾收集器
+	-XX:UseParNewGC  使用ParNew垃圾收集器
+	-XX:ParNewGCThreads  ParNew收集器启动的线程数
+		默认与CPU核数一致，即4核CPU，启动4个线程
+
 
 023
 31.CMS垃圾收集器基本原理-老年代垃圾收集器
@@ -333,6 +351,8 @@ JVM课程学习
 	1）将内存区域划分为多个大小相等的Region
 	2）可设置垃圾回收预期停顿时长  -XX:MaxGCPauseMills  最大停顿时长，默认为200ms
 		回收价值：以最少的时间，回收最多的空间
+		
+		stop the world时间可控
 
 030
 36.内存中有多少个Region，每个Region有多大
@@ -342,7 +362,7 @@ JVM课程学习
 	每个Region必须是2的倍数
 	-XX:G1HeapRegionSize  设置Region大小
 37.G1区域划分
-	初始新生代占比为 5%  -XX:G1NewSizePercent=5%
+	初始新生代占比为5%  -XX:G1NewSizePercent=5%
 	系统运行过程，新生代的Region会增多，最多不会超过60%
 	-XX:G1MaxNewSizePercent  设置新生代最多的Region比例
 	垃圾回收时，新生代Region还会减少，Region属于新生代还是老年代是动态的。
@@ -352,15 +372,74 @@ JVM课程学习
 	
 	新生代Region空间达到预设的60%时，就会触发Minor GC
 		也同样需要“stop the world”，采用复制算法，将存活对象由Eden的Region，转移到Survivor的Region。
-38.对象什么时候进入老年代
+38.G1 对象什么时候进入老年代
 	1）-XX:MaxTenuringThreshold  设置最大存活年龄  达到这个年龄进入老年代
 	2）动态年龄判断  存活对象超过survivor50%时，超龄的对象进入老年代
+	3）存活对象大于survivor空间大小
 39.大对象Region
 	默认超过Region空间50%大小的对象，成为大对象，大对象进入大对象Region
 	并跟随新生代，老年代回收时，一并回收大对象。
+	大对象不在进入老年代
+
+031
+40.新生代和老年代的混合垃圾回收
+	-XX:InitiatingHeapOccupancyPercent=45%  老年代region占45%时触发混合垃圾回收
 	
+41.混合垃圾回收过程
+	1）初始标记  stop the world
+		标记GC Roots直接引用的对象
+			a.线程栈中局部变量代表的GC Roots
+			b.方法区中静态变量代表的GC Roots
+	2)并发标记  并行
+		从GC Roots对象，追踪标记所有存活对象  
+			（与CMS不同-CMS为对对象逐个判断GC Roots可达性）
+		记录对象的修改操作
+	3）最终标记 stop the world
+		对上一阶段记录的对象做最终标记
+	4）混合回收  复制算法***
+		a.新生代，老年代，大对象Region区都会被回收
+		b.具体回收哪些Region需要根据预设的停顿时间，各Region存活对象数量，
+			存活对象占比，回收的预期性能和效率综合考虑。
+			-XX:G1MixedGCLiveThresholdPercent=85%  回收存活对象大小低于85%空间的Region
+		c.多次混合回收
+			-XX:G1MixedGCCountTarget=8  默认8次
+			-XX:G1HeapWastePercent=5%  空闲出的Region达到5%时，立即停止本次混合回收
 	
+	回收失败：
+		复制对象时，发现没有空闲的Region来存放，就会发生回收失败。
+		回收失败时，会stop the world,采用单线程来继续进行回收。
 	
+033
+42.G1垃圾收集器，Minor GC时机
+	由于-XX:MaxGCPauseMills的存在，垃圾收集器需要保证收集时间要小于预设值
+		因此一般不会在新生代达到60%时才进行Minor GC。
+	比如预设200ms时间，Region达到10%时，JVM预测回收时间已经接近200ms，
+		则直接进行Minor GC。
+43.优化G1 GC
+	因此优化G1 Minor GC,即合理设置-XX:MaxGCPauseMills,
+		保证一次GC不要停顿太久，也要保证不能频繁的进行GC。
+	
+	老年代到达-XX:InitiatingHeapOccupancyPercent=45%时，会触发Mixed GC
+		因此避免Mixed GC,就是尽量避免对象进入老年代
+		设置-XX:MaxGCPauseMills过长，容易导致GC存活对象更多，则更容易进入老年代；
+		设置过短，则会产生频繁的Minor GC。
+		
+	因此，合理设置GC时长是优化G1垃圾收集器的关键。
+			
+CMS与G1
+1) 老年代  ： 新生代+老年代
+2) 整块内存  ： Region
+3) 垃圾回收过程
+	初始标记
+	并发标记    判断对象是否被GC Roots引用  ：   从GC Roots开始，标记可达对象  并记录对象的修改状态
+	重新标记  ： 最终标记  
+	并发清理  ： 混合回收
+		失败时，都会stop the world,采用单线程继续回收
+4）垃圾回收算法   标记-清理算法  ： 复制算法
+5）适用场景      小内存   ： 大内存（复制不适用）
+6）Full GC时机
+	 -XX:CMSInitiatingOccupancyFaction=92%   -XX:InitiatingHeapOccupancyPercent=45%
+
 	
 	
 
