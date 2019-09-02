@@ -469,6 +469,8 @@ CMS与G1
 	
 	//1M空间 ->无引用  * 3   再分配2M,发现Eden无空间，进行ygc
 	
+044
+46.日志查看
 	打印日志如下：
 	Java HotSpot(TM) 64-Bit Server VM (25.131-b11) for windows-amd64 JRE (1.8.0_131-b11), built on Mar 15 2017 01:23:53 by "java_re" with MS VC++ 10.0 (VS2010)
 Memory: 4k page, physical 16621364k(8878076k free), swap 19111732k(9614488k free)
@@ -494,7 +496,28 @@ Heap
  Metaspace       used 3470K, capacity 4496K, committed 4864K, reserved 1056768K
   class space    used 384K, capacity 388K, committed 512K, reserved 1048576K
 
-
+045
+47.模拟对象进入老年代
+	1）动态年龄判断  
+		1）ygc时，有对象存活且小于survivor区大小，进入sur0
+		2）进入sur0区对象大小大于sur0区50%
+		3）第二次ygc时，原sur0区对象依然存活，且有新的对象进入sur
+		此时由于sur区1岁+2岁对象>50%,则2岁对象进入老年代
+		
+	上次实验得知，除了程序产生的对象之外，还有未知的512K对象产生，
+	因此本次调大空间，翻倍新生代，老年代
+	public static void main(String[] args){
+		byte[] arr = new byte[2*1024*1024];   
+		arr = new byte[2*1024*1024];
+		arr = new byte[2*1024*1024];
+		arr = null;//6M无引用
+		byte[] arr2 = new byte[128*1024];//128K有引用（或者可以更大，待测试，要比sur的50%大）
+		byte[] arr3 = new byte[2*1024*1024];//2M无空间分配，ygc，128K进入sur
+		arr3 = new byte[2*1024*1024];
+		arr3 = new byte[2*1024*1024];
+		arr3 = null;//6M无引用
+		byte[] arr4 = new byte[2*1024*1024];//
+	}
 	
 	
 
