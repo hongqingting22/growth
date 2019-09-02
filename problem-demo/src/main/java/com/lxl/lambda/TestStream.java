@@ -163,6 +163,10 @@ public class TestStream {
         System.out.println("-------------------------");
         System.out.println(getStr(e -> e +"啦啦啦啦", 3));
 
+        MyInteface my = (a,b) ->{return a + b;};
+        int sum = my.sum(2, 3);
+        System.out.println(sum);
+
     }
 
     public String getStr(Function<Integer,String> function, Integer arg){

@@ -439,6 +439,61 @@ CMS与G1
 5）适用场景      小内存   ： 大内存（复制不适用）
 6）Full GC时机
 	 -XX:CMSInitiatingOccupancyFaction=92%   -XX:InitiatingHeapOccupancyPercent=45%
+	 
+
+第七章 
+043 动手模拟ygc
+44.打印日志配置
+	-XX:+PrintGCDetails   日志详情
+	-XX:+PrintGCTimeStamps   GC时间
+	-Xloggc:gc.log   日志文件
+45.模拟ygc
+	1）Eden区空间小，容易ygc
+	2）ygc后很少或不会存活对象，即不会进入survivor或old区，不会old gc
+	3）创建对象不能比设置的大对象阈值大，否则会直接进入老年代
+	
+	配置：jdk1.8
+	-XX:NewSize=5242880 -XX:MaxNewSize=5242880
+	-XX:InitialHeapSize=10485760 -XX:MaxHeapSize=10485760
+	-XX:PretenureSizeThreshold=10485760
+	-XX:+UseParNewGC -XX:+UseConcMarkSweepGC
+	-XX:PrintGCDetails -XX:PrintGCTimeStamps -Xloggc:gc.log
+	
+	public static void main(String[] args){
+		byte[] arr = new byte[1024*1024];   
+		arr = new byte[1024*1024];
+		arr = new byte[1024*1024];
+		arr = null;
+		byte[] arr2 = new byte[2*1024*1024];
+	}
+	
+	//1M空间 ->无引用  * 3   再分配2M,发现Eden无空间，进行ygc
+	
+	打印日志如下：
+	Java HotSpot(TM) 64-Bit Server VM (25.131-b11) for windows-amd64 JRE (1.8.0_131-b11), built on Mar 15 2017 01:23:53 by "java_re" with MS VC++ 10.0 (VS2010)
+Memory: 4k page, physical 16621364k(8878076k free), swap 19111732k(9614488k free)
+CommandLine flags: -XX:InitialHeapSize=10485760 -XX:MaxHeapSize=10485760 -XX:MaxNewSize=5242880 -XX:MaxTenuringThreshold=6 -XX:NewSize=5242880 -XX:OldPLABSize=16 -XX:PretenureSizeThreshold=10485760 -XX:+PrintGC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseCompressedClassPointers -XX:+UseCompressedOops -XX:+UseConcMarkSweepGC -XX:-UseLargePagesIndividualAllocation -XX:+UseParNewGC 
+//上一行为JVM配置，如果想要拿到JVM默认配置，配置-XX:PrintGCDetails即可查看
+
+0.133: [GC (Allocation Failure) 0.181: [ParNew: 3118K->512K(4608K), 0.0024566 secs] 3118K->1738K(9728K), 0.0506210 secs] [Times: user=0.00 sys=0.02, real=0.10 secs] 
+//启动133毫秒后，分配空间失败，到181毫秒，新生代3118K内存回收后存活512K，4608（Eden4096+Survivor512K）,用时2.45ms
+整个堆内存3118K,回收后存活1738K，9728（Eden+survivor+old）,用时50ms;
+
+0.230: [GC (Allocation Failure) 0.230: [ParNew: 2679K->96K(4608K), 0.0028729 secs] 3906K->1778K(9728K), 0.0029835 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] 
+
+Heap
+ par new generation   total 4608K, used 2214K [0x00000000ff600000, 0x00000000ffb00000, 0x00000000ffb00000)
+ //新生代 总空间4.5M ,使用2214K（包含最后分配的2M）
+ 
+  eden space 4096K,  51% used [0x00000000ff600000, 0x00000000ff8118a8, 0x00000000ffa00000)
+  //eden区 4M  使用51%
+  
+  from space 512K,  18% used [0x00000000ffa00000, 0x00000000ffa18200, 0x00000000ffa80000)
+  to   space 512K,   0% used [0x00000000ffa80000, 0x00000000ffa80000, 0x00000000ffb00000)
+ concurrent mark-sweep generation total 5120K, used 1682K [0x00000000ffb00000, 0x0000000100000000, 0x0000000100000000)
+ Metaspace       used 3470K, capacity 4496K, committed 4864K, reserved 1056768K
+  class space    used 384K, capacity 388K, committed 512K, reserved 1048576K
+
 
 	
 	
