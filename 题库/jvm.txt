@@ -498,7 +498,7 @@ Heap
 
 045
 47.模拟对象进入老年代
-	1）动态年龄判断  
+	动态年龄判断  
 		1）ygc时，有对象存活且小于survivor区大小，进入sur0
 		2）进入sur0区对象大小大于sur0区50%
 		3）第二次ygc时，原sur0区对象依然存活，且有新的对象进入sur
@@ -518,6 +518,23 @@ Heap
 		arr3 = null;//6M无引用
 		byte[] arr4 = new byte[2*1024*1024];//
 	}
+	
+046
+48.模拟对象进入老年代
+	ygc存活对象survivor区放不下，直接进入老年代
+		ygc时有存活对象且大于survivor区大小
+	public static void main(String[] args){
+		byte[] arr = new byte[2*1024*1024];   
+		arr = new byte[2*1024*1024];
+		arr = new byte[2*1024*1024];
+		byte[] arr2 = new byte[128*1024];
+		arr2 = null;
+		byte[] arr3 = new byte[2*1024*1024];//2M无空间分配，ygc，arr的2M存活，但大于sur区
+	}
+	
+	结果发现：2M存活对象直接进入老年代，500K未知对象进入sur区  ??待考察
+	
+	
 	
 	
 
