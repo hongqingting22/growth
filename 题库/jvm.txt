@@ -506,6 +506,12 @@ Heap
 		
 	上次实验得知，除了程序产生的对象之外，还有未知的512K对象产生，
 	因此本次调大空间，翻倍新生代，老年代
+	-XX:NewSize=10485760 -XX:MaxNewSize=10485760 
+	-XX:InitialHeapSize=20971520 -XX:MaxHeapSize=20971520 
+	-XX:PretenureSizeThreshold=10485760 
+	-XX:+UseParNewGC -XX:+UseConcMarkSweepGC 
+	-XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xloggc:gc1.log
+	
 	public static void main(String[] args){
 		byte[] arr = new byte[2*1024*1024];   
 		arr = new byte[2*1024*1024];
@@ -533,6 +539,47 @@ Heap
 	}
 	
 	结果发现：2M存活对象直接进入老年代，500K未知对象进入sur区  ??待考察
+	
+047
+49.模拟oldgc
+	1）新生代对象ygc后存活量大
+	2）进入老年代，发现老年代空间不足
+	设置大对象大小为3M
+	-XX:PretenureSizeThreshold=3145728 
+	
+	public static void main(String[] args){
+		byte[] arr = new byte[4*1024*1024]; //直接进入老年代  
+		arr = null;
+		byte[] arr2 = new byte[2*1024*1024];
+		byte[] arr3 = new byte[2*1024*1024];
+		byte[] arr4 = new byte[2*1024*1024];
+		byte[] arr5 = new byte[128*1024];
+		
+		byte[] arr6 = new byte[2*1024*1024];//2M无空间分配，ygc，6M128K全部存活进入老年代，老年代无空间，进行old GC
+	}
+
+050
+50.jstat命令
+	jstat -gc PID 2000   每两秒钟打印一次堆空间信息
+	S0C    S1C    S0U    S1U      EC       EU        OC         OU       MC     MU    CCSC   CCSU   YGC     YGCT    FGC    FGCT     GCT   
+9216.0 9216.0 7745.3  0.0   1073664.0 158271.4 2184704.0   683554.0  97664.0 87081.6 11136.0 9371.8   2242   30.026   3      0.534   30.560
+9216.0 9216.0 7745.3  0.0   1073664.0 163909.7 2184704.0   683554.0  97664.0 87081.6 11136.0 9371.8   2242   30.026   3      0.534   30.560
+9216.0 9216.0 7745.3  0.0   1073664.0 167942.2 2184704.0   683554.0  97664.0 87081.6 11136.0 9371.8   2242   30.026   3      0.534   30.560
+S0C: sur0空间
+S1C：sur1空间
+S0U：sur0使用空间
+S1U:sur1使用空间
+EC：eden空间
+EU：eden使用空间
+OC：old空间
+OU：old使用空间
+MC：方法区空间
+MU：方法区使用空间
+YGC:ygc次数
+YGCT：运行时间内ygc总耗时
+FGC：fullgc次数
+FGCT：fullgc总耗时
+GCT：gc总耗时
 	
 	
 	
