@@ -580,6 +580,16 @@ YGCT：运行时间内ygc总耗时
 FGC：fullgc次数
 FGCT：fullgc总耗时
 GCT：gc总耗时
+
+051
+51.jmap命令
+	jmap -heap PID  堆空间各区域内存及使用情况
+	jmap -histo PID  打印出对象占用空间，对象数量等信息
+	jmap -dump:live,format=b,file=dump.hprof  PID  堆内存对象快照生成到dump.hprof文件中
+	
+52.jhat命令
+	jhat dump.hprof -port 7000   将文件以图形化的形式展现在浏览器上
+	
 	
 	
 	
