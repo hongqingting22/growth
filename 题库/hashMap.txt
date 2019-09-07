@@ -1,10 +1,15 @@
 1.1.7和1.8中HashMap的结构差别，为什么？
-	数组+链表
-	数组+链表+红黑树
+	数组+链表（头插法） 
+	数组+链表（尾插法）+红黑树
 	红黑树比链表的查询效率高，从O(N)->O(logN)
 
-2.HashMap与ConCurrentHashMap的区别，ConCurrentHashMap如何实现的线程安全。
-
+2.HashMap与ConcurrentHashMap的区别，ConcurrentHashMap如何实现的线程安全。
+	线程安全
+	ConcurrentHashMap   1.7   1.8比较
+	结构：
+	1.7 segment数组 + 分段内 槽位数组 + 链表，默认16个，使用ReenTrantLock实现锁
+	
+	1.8 数组+链表+红黑树  实现线程安全，依靠CAS+synchronized
 
 3.HashMap的put操作
 	hash值的计算：key == null ? 0 : (key.hash ^ key.hash >>> 16);

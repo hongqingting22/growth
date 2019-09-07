@@ -14,6 +14,23 @@ package com.lxl.threadLocal;
  * 3.ThreadLocalMap使用的Entry继承了WeakReference，每次垃圾回收都会被回收
  *      使用ThreadLocal作为key，是因为map中可以为给Thread存多个本地变量，
  *      如果以ThreadId作为key，则无法区分多个value
+ *
+ *     内存泄漏问题：
+ *     static class Entry extends WeakReference<ThreadLocal<?>>
+ *          ThreadLocalMap的key是弱引用，GC时key会被回收，但是value不会被回收，
+ *              会造成无用对象一直存在JVM中
+ *          详见下图：
+ *          ThreadLocal对象 <----------------------\
+ *                                                 \
+ *          Thread对象<-ThreadLocalMap对象<-Entry<key,value>
+ *          ThreadLocal对象可以被回收，但是只是key为null，为null后，键值对已成为无用数据，但是不会被回收
+ *          问题：为什么要使用弱引用？
+ *              如果为强引用，则即使线程已经结束，对象仍然不会被回收，会造成OOM。
+ *          解决内存泄漏问题：
+ *              1.ThreadLocal对象自身的解决方案：会在get，set，remove时将所有key为空的键值对擦除；
+ *              2.程序解决：线程使用完本地变量之后，就像关闭流一样，调用remove方法，擦除键值对。
+ *
+ *
  */
 public class ThreadLocalDemo {
 
