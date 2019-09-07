@@ -1,3 +1,67 @@
 1.1.7和1.8中HashMap的结构差别，为什么？
+	数组+链表
+	数组+链表+红黑树
+	红黑树比链表的查询效率高，从O(N)->O(logN)
 
 2.HashMap与ConCurrentHashMap的区别，ConCurrentHashMap如何实现的线程安全。
+
+
+3.HashMap的put操作
+	hash值的计算：key == null ? 0 : (key.hash ^ key.hash >>> 16);
+
+	 final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
+                   boolean evict) {
+        Node<K,V>[] tab; Node<K,V> p; int n, i;
+		//1.tab赋值为map的槽位数组，如果数组为空或者长度为0，则扩容
+        if ((tab = table) == null || (n = tab.length) == 0)
+            n = (tab = resize()).length;
+		//2.p为当前hash命中的槽位，如果为空，则新建槽位，并放入要填入的key，value键值对
+        if ((p = tab[i = (n - 1) & hash]) == null)
+            tab[i] = newNode(hash, key, value, null);
+        else {
+            Node<K,V> e; K k;
+			/*槽位不为空，则有三种情况：
+				一：第一个节点的key等于要填入的key，则替换掉
+				二：如果当前槽位已经演变成了红黑树，则将key，value放入红黑树
+				三：不是红黑树，则为链表，遍历链表，
+					a.如果链表下一个节点为空，则新建节点，并填入key，value(此时使用的是尾插法)
+						如果此时链表长度大于等于7，则需要转换为红黑树.
+							（转换为红黑树，还需要槽位数组的长度大于64）
+					b.如果下一个节点不为空，且节点key等于要填入的key，替换掉，且退出循环*/
+            if (p.hash == hash &&
+                ((k = p.key) == key || (key != null && key.equals(k))))
+                e = p;
+            else if (p instanceof TreeNode)
+                e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
+            else {
+                for (int binCount = 0; ; ++binCount) {
+                    if ((e = p.next) == null) {
+                        p.next = newNode(hash, key, value, null);
+                        if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
+                            treeifyBin(tab, hash);//数组长度小于64，则扩容，不转红黑树
+                        break;
+                    }
+                    if (e.hash == hash &&
+                        ((k = e.key) == key || (key != null && key.equals(k))))
+                        break;
+                    p = e;
+                }
+            }
+			//
+            if (e != null) { // existing mapping for key
+                V oldValue = e.value;
+                if (!onlyIfAbsent || oldValue == null)
+                    e.value = value;
+                afterNodeAccess(e);
+                return oldValue;
+            }
+        }
+        ++modCount;
+        if (++size > threshold)
+            resize();
+        afterNodeInsertion(evict);
+        return null;
+    }
+	
+4.当链表长度等于8时，链表一定会转化为红黑树吗？
+	不是，还需要数组长度大于64

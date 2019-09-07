@@ -41,9 +41,15 @@
 		
 
 2.YGC与FullGC触发条件
+ 1）Eden区没有空间分配对象时，触发YGC
+ 2）YGC之前，发现年轻代对象大小大于老年代剩余空间大小，且历次YGC进入老年代对象大小也大于老年代剩余空间；
+	YGC之后，老年代没有空间分配给存活对象。
 	
 
 3.频繁YGC，如何排查
+1）jstat 命令查询生成对象的速率，YGC的频率
+2）jmap打印对象信息
+3）jstack异常堆栈信息
 
 4.类加载时机
 	1）new,putStatic,getStatic,invokeStatic
@@ -53,7 +59,9 @@
 	4）虚拟机启动时，对包含有main方法的主类初始化
 	5）使用动态语言时，解析为REF_putStatic,REF_getStatic,REF_invokeStatic句柄，且类没有初始化
 	
-	被动引用：
+5.对象头的组成
+	1）Mark Word 自身运行时数据  包括：GC分代年龄，锁状态标记，线程持有的锁，哈希码
+	2）类型指针
 	
 	
 JVM课程学习
