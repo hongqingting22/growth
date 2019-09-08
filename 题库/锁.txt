@@ -90,4 +90,21 @@
 					2.否，继续CAS自旋，如果自旋结束仍未获取锁对象，则膨胀为重量级锁。
 						对象头信息锁标记改为“10”，指向重量级锁的指针。当前线程和之后的线程都进入阻塞状态。
 		7）重量级锁
-			
+		
+三、Lock
+	使用：
+		需要手动的加锁，解锁：lock  unlock  
+		可以被中断等待  ：lockInterruptibly可以被thread.interrupt()方法终端
+		可以尝试获取锁： tryLock()  tryLock(Long time,TimeUnit unit)
+		可以加条件锁：  Lock.newCondition()
+			condition.await()  condition.signal();  condition.signalAll(); 
+	实现原理：
+		CAS+AQS
+	AbstractQueueSynchronizer 队列同步器
+	属性：state 当前锁状态
+		exclusiveOwnerThread 获取锁的当前线程  (AbstarctOwnerSynchronizer的属性)
+		Node  队列
+	
+	线程进入Lock.lock()时，会尝试设置state=1
+		a.如果设置成功，设置exclusiveOwnerThread为当前线程
+		b.设置失败，表示已经有线程占有了该锁对象，则进入Node队列
