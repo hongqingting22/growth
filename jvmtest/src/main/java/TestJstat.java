@@ -9,6 +9,9 @@ public class TestJstat {
      * -XX:+UseParNewGC -XX:+UseConcMarkSweepGC
      * -XX:SurvivorRatio=8
      *
+     * 等价于
+     * -Xms200M -Xmx200M -Xmn100M 	-XX:PretenureSizeThreshold=3M
+     *
      * jstat可以分析出
      * 1.每秒产生的对象大小
      * 2.YGC频率

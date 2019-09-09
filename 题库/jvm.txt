@@ -571,6 +571,7 @@ Heap
 		byte[] arr6 = new byte[2*1024*1024];//2M无空间分配，ygc，6M128K全部存活进入老年代，老年代无空间，进行old GC
 	}
 
+第八章
 050
 50.jstat命令
 	jstat -gc PID 2000   每两秒钟打印一次堆空间信息
@@ -603,6 +604,34 @@ GCT：gc总耗时
 52.jhat命令
 	jhat dump.hprof -port 7000   将文件以图形化的形式展现在浏览器上
 	
+	jinfo -flags 5103  可查看当前jvm配置信息
+	
+	3355443200
+	‭1572864000‬
+	1782579200
+	-XX:MaxNewSize=‭1572864000‬ -XX:NewSize=‭1572864000‬ -XX:OldSize=1782579200 -XX:SurvivorRatio=8
+	
+第九章
+058
+53.JVM配置模板
+	以8G内存为例
+	-Xms4096M -Xmx4096M -Xmn3072M -Xss1M 
+	-XX:PermSize=256M -XX:MaxPermSize=256M
+	-XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFaction=92 
+		-XX:+UseCMSCompactAtFullCollection -XX:CMSFullGCSBeforeCompaction=0
+	-XX:+CMSParallelInitialMarkEnabled (CMS初始标记阶段使用多线程)
+	-XX:+CMSScavengeBeforeRemark  (CMS重新标记之前进行一次YGC)
+	
+	
+	-Xms200M -Xmx200M -Xmn100M
+	-XX:PretenureSizeThreshold=3M -XX:MaxTenuringThreshold=15 
+
+	-Xmn = -XX:NewSize
+	-Xms = -XX:InitialHeapSize
+	-Xmx = -XX:MaxHeapSize 
+	XX参数需要使用等于号，X参数不需要
+	两种都可以使用单位：G，M，K以及不使用单位（表示字节B）
+	1G=1024M  1M=1024K 1K=1024B 1B=8bit   一个字节占8位（8比特）
 	
 	
 	

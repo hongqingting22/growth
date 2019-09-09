@@ -8,6 +8,6 @@ public class LockDemo {
     public static void main(String[] args) {
 //        AbstractQueuedSynchronizer
 
-        ReentrantLock
+//        ReentrantLock
     }
 }
