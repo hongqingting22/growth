@@ -633,7 +633,22 @@ GCT：gc总耗时
 	两种都可以使用单位：G，M，K以及不使用单位（表示字节B）
 	1G=1024M  1M=1024K 1K=1024B 1B=8bit   一个字节占8位（8比特）
 	
+059
+54.追踪类加载日志
+	-XX:TraceClassLoading -XX:TraceClassUnloading
+	打印类加载和类卸载日志
 	
+55.反射对JVM的影响
+	使用反射时，会生成Class对象，放在堆空间内;将加载的类信息放在方法区；
+	Class对象都是软引用，垃圾回收后仍然空间不足时，会回收Class对象。
+	软引用的存活时间，公式：
+	clock -timestamps < freespace * SoftRefLRUPolicyMSPerMB
+	                     空闲空间    每M空间可以允许软引用存活的时间（ms）
+	例：空闲内存空间为3000M ，SoftRefLRUPolicyMSPerMB=1000  则，软引用对象可以存活3000s
+	-XX:SoftRefLRUPolicyMSPerMB=1000  
+	如果该值设置为0，会导致产生软引用就回收，则导致频繁的生成Class对象，频繁的有类信息放入方法区。
+	方法区占满，也会触发Full GC。
+	因此此参数不能设置为0。
 	
 	
 
