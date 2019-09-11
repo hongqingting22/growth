@@ -651,7 +651,12 @@ GCT：gc总耗时
 	因此此参数不能设置为0。
 	
 	
-
+061
+56.System.gc();
+	显式执行Full GC，项目中不允许显式调用该方法，会导致空间充足的时候也执行Full GC。
+	如果在请求量大时，频繁Full GC会拖慢项目运行，造成卡死。
+	-XX:+DisableExplicitGC  不能显式执行GC
+	
   
 	
 	
