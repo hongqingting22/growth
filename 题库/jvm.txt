@@ -656,7 +656,16 @@ GCT：gc总耗时
 	显式执行Full GC，项目中不允许显式调用该方法，会导致空间充足的时候也执行Full GC。
 	如果在请求量大时，频繁Full GC会拖慢项目运行，造成卡死。
 	-XX:+DisableExplicitGC  不能显式执行GC
-	
+
+第十章	
+064
+57.频繁Full GC的原因
+	1.内存分配不合理，导致存活对象直接进入老年代
+	2.大对象配置不合理
+	3.方法区频繁被占满
+	4.显式调用System.gc()
+
+58.-XX:SurvivorRatio=x  表示Eden:sur0:sur1 = x:1:1
   
 	
 	
