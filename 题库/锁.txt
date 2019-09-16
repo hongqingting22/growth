@@ -108,3 +108,5 @@
 	线程进入Lock.lock()时，会尝试设置state=1
 		a.如果设置成功，设置exclusiveOwnerThread为当前线程
 		b.设置失败，表示已经有线程占有了该锁对象，则进入Node队列
+		
+四、AQS AbstractQueuedSynchronizer
