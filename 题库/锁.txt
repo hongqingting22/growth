@@ -91,6 +91,9 @@
 						对象头信息锁标记改为“10”，指向重量级锁的指针。当前线程和之后的线程都进入阻塞状态。
 		7）重量级锁
 		
+		1.5之后
+		偏向锁 ->      轻量级锁 ->      重量级锁
+		   锁争用    CAS适应性自旋锁
 三、Lock
 	使用：
 		需要手动的加锁，解锁：lock  unlock  
@@ -100,7 +103,7 @@
 			condition.await()  condition.signal();  condition.signalAll(); 
 	实现原理：
 		CAS+AQS
-	AbstractQueueSynchronizer 队列同步器
+	AbstractQueuedSynchronizer 队列同步器
 	属性：state 当前锁状态
 		exclusiveOwnerThread 获取锁的当前线程  (AbstarctOwnerSynchronizer的属性)
 		Node  队列
@@ -109,4 +112,28 @@
 		a.如果设置成功，设置exclusiveOwnerThread为当前线程
 		b.设置失败，表示已经有线程占有了该锁对象，则进入Node队列
 		
-四、AQS AbstractQueuedSynchronizer
+四、AQS AbstractQueuedSynchronizer  抽象队列同步器
+	CLH队列
+	--待续
+	
+五、Mysql锁
+	1、概述
+		表锁：开销小，加锁快；容易出现冲突，并发低。
+		行锁：开销大，加锁慢；不容易出现冲突，并发高。
+		页面锁：介于表锁和行锁之间。
+		MyISAM支持表锁，InnoDB支持行锁,也支持表锁。
+	2、MyISAM锁
+		表共享读锁和表独占写锁
+		写锁：线程获取某表写锁后，自身可以对该表进行读，写操作；
+				阻塞其他线程对该表的读和写操作；
+		读锁：线程获取某表读锁后，自身可以对该表进行读操作，不能对该表进行写操作，也不能对其他表进行读，写操作；
+				阻塞其他线程对该表的写操作，不会影响其他线程的读操作；
+		
+
+
+六、线程池
+
+
+七、乐观锁和悲观锁
+	
+	
