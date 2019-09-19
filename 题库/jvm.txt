@@ -666,6 +666,11 @@ GCT：gc总耗时
 	4.显式调用System.gc()
 
 58.-XX:SurvivorRatio=x  表示Eden:sur0:sur1 = x:1:1
+
+第十一章
+072
+59.什么区域会发生内存溢出
+	方法区  虚拟机栈  堆内存
   
 	
 	
