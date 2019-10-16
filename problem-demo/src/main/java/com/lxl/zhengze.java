@@ -13,6 +13,9 @@ public class zhengze {
         String s = refer.replaceAll(regex, "");
         System.out.println(refer.replaceAll(s,""));
 
+        Integer num = 2;
+        System.out.println(num.equals(null));
+
 //        if(matcher.matches()){
 //            System.out.println(matcher.group());
 //            System.out.println(matcher.group(1));
