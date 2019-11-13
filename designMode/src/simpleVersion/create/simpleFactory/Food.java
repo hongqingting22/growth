@@ -1,4 +1,4 @@
-package simpleVersion.simpleFactory;
+package simpleVersion.create.simpleFactory;
 
 public interface Food {
 }

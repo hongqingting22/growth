@@ -1,5 +1,12 @@
-package simpleVersion.simpleFactory;
+package simpleVersion.create.simpleFactory;
 
+/**
+ * 简单工厂模式
+ * 三种实现：
+ * 1.静态方法，if-else实现
+ * 2.多个方法
+ * 3.多个静态方法
+ */
 public class StaticFactory {
     private StaticFactory(){}
 
