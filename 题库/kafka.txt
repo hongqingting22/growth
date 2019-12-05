@@ -9,9 +9,15 @@
 	8）异步通信
 
 2.kafka几个名词
-	1）producer  发布者（生产者）
+	1）producer  发布者（生产者）可以指定消息的key，指定partition
 	2）topic	 消息类别 可以被不同消费者组消费
 	3）partition 分区 一个topic可以有一个或多个分区，有多个分区就可以启用多个消费者进行消费
+					每个分区对应一个文件夹，存储所有消息和索引。
+					kafka集群会保留所有消息，无论消费与否。
+					由于磁盘限制，可以设置不同的策略删除数据：一基于时间，二基于partition文件大小。
+					可在$KAFKA_HOME/config/server.properties中配置
+					kafka读取某一条消息的时间复杂度为O(1),与文件大小无关。
+					
 	4）broker
-	5）consumer
+	5）consumer    记录偏移量 offset
 	6）consumer group
