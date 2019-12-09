@@ -24,7 +24,7 @@ public class StringDemo {
         String substring = d.substring(d.indexOf(")")+2);
         System.out.println(substring);*/
 
-        String item = "{\"customerCode\":\"85445665\"}";
+        String item = "{\"customerCode\":273,\"flowGroupId\":\"1858fb23fbd4434086d1719af711d90b\"}";
         PlatformActionVO actionVO = JSONObject.parseObject(item, PlatformActionVO.class);
         System.out.println(actionVO);
     }

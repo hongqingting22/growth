@@ -9,7 +9,9 @@
 	8）异步通信
 
 2.kafka几个名词
-	1）producer  发布者（生产者）可以指定消息的key，指定partition
+	1）producer  消息路由：
+					发布者（生产者）可以指定消息的key，Producer会根据key与partition机制来判断发送到哪个partition。
+					Partition机制可以在partition.class这个参数来指定，该class必须实现kafka.producer.Partitioner接口。
 	2）topic	 消息类别 可以被不同消费者组消费
 	3）partition 分区 一个topic可以有一个或多个分区，有多个分区就可以启用多个消费者进行消费
 					每个分区对应一个文件夹，存储所有消息和索引。
@@ -21,3 +23,11 @@
 	4）broker
 	5）consumer    记录偏移量 offset
 	6）consumer group
+	kafka的广播与单播：一个topic对应多个consumer group,多个消费群组接收可以分别接收并消费同一条消息；
+			一个topic中的一条消息在每个consumer group中只能发送一个consumer。
+
+3.消息投递保证  kafka deliver guaranteen
+	At most once :可能会丢失，但绝不会重复发送；
+	At least once：消息不会丢失，但是可能会重复发送；
+	Exactly once：每条消息肯定会被传输且仅会被传输一次。
+			
