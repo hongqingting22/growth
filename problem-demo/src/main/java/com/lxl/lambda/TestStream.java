@@ -1,14 +1,13 @@
 package com.lxl.lambda;
 
+import com.alibaba.fastjson.JSONObject;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * stream 流式编程
@@ -136,6 +135,11 @@ public class TestStream {
         System.out.println("----------------find-------------------------");
         System.out.println(persons.stream().findFirst().get());
         System.out.println(persons.stream().findAny().get());
+
+        System.out.println("---------------removeIf-----------------------");
+        boolean b = persons.removeIf(e -> e.getAge() == 21);
+        System.out.println(b);
+        persons.forEach(System.out::print);
     }
 
     public List<Person> getPersonByPredicate(Predicate<Person> predicate){
@@ -171,6 +175,33 @@ public class TestStream {
 
     public String getStr(Function<Integer,String> function, Integer arg){
         return function.apply(arg);
+    }
+
+
+    @Test
+    public void testJSON(){
+        JSONObject json = new JSONObject();
+        json.put("a", 1);
+        json.put("b", 5);
+        json.put("c", 10);
+        List<Map.Entry<String, Object>> collect = json.entrySet().stream().filter(e -> (Integer) e.getValue() > 2).collect(Collectors.toList());
+        collect.forEach(System.out::println);
+        List<String> collect1 = collect.stream().map(e -> e.getKey() + "," + e.getValue()).collect(Collectors.toList());
+        StringBuilder key = new StringBuilder();
+        StringBuilder value = new StringBuilder();
+        for(int i = 0;i<collect1.size();i++){
+            String str = collect1.get(i);
+            String[] split = str.split(",");
+            if(i < collect1.size() - 1){
+                key.append(split[0]).append(",");
+                value.append(split[1]).append(",");
+            }else{
+                key.append(split[0]);
+                value.append(split[1]);
+            }
+        }
+        System.out.println(key);
+        System.out.println(value);
     }
 
 

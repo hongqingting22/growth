@@ -1,8 +1,12 @@
 package com.lxl.string;
 
 import com.alibaba.fastjson.JSONObject;
+import org.junit.Test;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StringDemo {
 
@@ -24,25 +28,95 @@ public class StringDemo {
         String substring = d.substring(d.indexOf(")")+2);
         System.out.println(substring);*/
 
-        String item = "{\"customerCode\":273,\"flowGroupId\":\"1858fb23fbd4434086d1719af711d90b\"}";
-        PlatformActionVO actionVO = JSONObject.parseObject(item, PlatformActionVO.class);
-        System.out.println(actionVO);
+//        String item = "{\"customerCode\":273,\"flowGroupId\":\"1858fb23fbd4434086d1719af711d90b\"}";
+//        PlatformActionVO actionVO = JSONObject.parseObject(item, PlatformActionVO.class);
+//        System.out.println(actionVO);
+
+//        splits(",,1,");
+        test();
+    }
+
+    public static void test(){
+        String name = "雷霆游戏服务中心_\uE32E へ风的寂渺ち";
+        boolean messyCode = isMessyCode(name);
+        System.out.println(messyCode);
+
+    }
+    public static boolean isMessyCode(String strName) {
+        Pattern p = Pattern.compile("\\s*|\t*|\r*|\n*");
+        Matcher m = p.matcher(strName);
+        String after = m.replaceAll("");
+        String temp = after.replaceAll("\\p{P}", "");
+        char[] ch = temp.trim().toCharArray();
+        float chLength = 0 ;
+        float count = 0;
+        for (int i = 0; i < ch.length; i++) {
+            char c = ch[i];
+            if (!Character.isLetterOrDigit(c)) {
+                if (!isChinese(c)) {
+                    count = count + 1;
+                }
+                chLength++;
+            }
+        }
+        float result = count / chLength ;
+        if (result > 0.4) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean isChinese(char c) {
+        Character.UnicodeBlock ub = Character.UnicodeBlock.of(c);
+        if (ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS
+                || ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS
+                || ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A
+                || ub == Character.UnicodeBlock.GENERAL_PUNCTUATION
+                || ub == Character.UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION
+                || ub == Character.UnicodeBlock.HALFWIDTH_AND_FULLWIDTH_FORMS) {
+            return true;
+        }
+        return false;
     }
 
 
     public static void splitDemo(){
-//        String msg = "sobot|||[object Object]|partnerid=1000001268";
-//        String[] split = msg.split("\\|");
-//        System.out.println(split[0]);
-//        System.out.println(split[1]);
-//        System.out.println(split[2]);
-//        System.out.println(split[3]);
-//        System.out.println(split[4]);
+//        String msg = "sobot|||{\"product_name\":\"周肖222不要动！！\",\"product_image\":\"http://oss.gongzhugou.vip//upload_dev/product/c/5/a/c5a0274d2112fa7470a1652fd5f706cc.jpg?x-oss-process=image/resize,m_fixed,w_512\"}|platformAction={\"customerCode\":\"10761111\",\"flowGroupId\":\"1858fb23fbd4434086d1719af711d90b\"}}";
+        String msg = "sobot||";
+        String[] split = msg.split("\\|");
+        System.out.println("0" + split[0]);
+        System.out.println("1" + split[1]);
+//        System.out.println("2" + split[2]);
+//        System.out.println("3" + split[3]);
+//        System.out.println("4" + split[4]);
 //        String tmp = "2.8.0".replaceAll("\\.", "");
 //        int versionInt = Integer.parseInt(tmp);
 //        System.out.println(versionInt >= 190);
 
 
+    }
+
+    public static void splits(String str) {
+        String[] split = str.split(",");
+        System.out.println(split.length);
+        String s = split[0];
+        String s1 = split[1];
+        String s2 = split[2];
+        String s3 = split[3];
+        System.out.println(s + "+" + s1 + "+" + s2 + "+" + s3);
+    }
+
+    @Test
+    public void testArrays(){
+        int[] nums = new int[4];
+        nums[0] = 1;
+        nums[1] = 0;
+        nums[2] = 1;
+        nums[3] = 1;
+        String s = Arrays.toString(nums);
+        System.out.println(s);
+        System.out.println(nums.toString());
     }
 
    static class PlatformActionVO {
@@ -75,28 +149,7 @@ public class StringDemo {
    }
 
 
-    private static void readFile1(File fin,String target) throws IOException {
-        FileInputStream fis = new FileInputStream(fin);
 
-        //Construct BufferedReader from InputStreamReader
-        BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-        FileOutputStream fos = new FileOutputStream(new File("company1.txt"));
-
-        //Construct BufferedReader from InputStreamReader
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos));
-        String line = null;
-        while ((line = br.readLine()) != null) {
-//            System.out.println(line);
-            if(line != ""&& line != null){
-                String substring = line.substring(line.indexOf(")")+2);
-                System.out.println(substring);
-//                writer.write(substring);
-            }
-        }
-
-        br.close();
-        writer.close();
-    }
 
 
 }

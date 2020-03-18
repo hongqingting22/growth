@@ -6,20 +6,19 @@ import java.util.regex.Pattern;
 public class zhengze {
     public static void main(String[] args) {
 
-        String refer = "https://test.sobot.cn/cfdsfdsonsole/workOrderCenter/workOrderClass/1001/309";
-        String regex = "(\\S*//[^/]*/)";  //
-//        Pattern pattern = Pattern.compile(regex);
-//        Matcher matcher = pattern.matcher(refer);
-        String s = refer.replaceAll(regex, "");
-        System.out.println(refer.replaceAll(s,""));
+        String refer = "https://test.sobot.cn/cfdsfdsonsole/workOrderCenter/workOrderClass/1001/309?fds";
+        String url = getUrl(refer);
 
-        Integer num = 2;
-        System.out.println(num.equals(null));
+    }
 
-//        if(matcher.matches()){
-//            System.out.println(matcher.group());
-//            System.out.println(matcher.group(1));
-//        }
-
+    private static String getUrl(String url){
+        String regex = "http(s)?:\\/\\/([a-zA-Z\\-0-9\\.]+)\\/?";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(url);
+        if(matcher.find()){
+            String group = matcher.group(0);
+            return group;
+        }
+        return null;
     }
 }
