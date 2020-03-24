@@ -30,7 +30,7 @@
 				二：如果当前槽位已经演变成了红黑树，则将key，value放入红黑树
 				三：不是红黑树，则为链表，遍历链表，
 					a.如果链表下一个节点为空，则新建节点，并填入key，value(此时使用的是尾插法)
-						如果此时链表长度大于等于7，则需要转换为红黑树.
+						如果此时链表长度大于等于8，则需要转换为红黑树.
 							（转换为红黑树，还需要槽位数组的长度大于64）
 					b.如果下一个节点不为空，且节点key等于要填入的key，替换掉，且退出循环*/
             if (p.hash == hash &&
@@ -73,5 +73,72 @@
 5.为什么长度等于6时会转为链表，而不是8？
 
 6.为什么map长度为2的n次幂
+	计算下标：hash&(length-1)
+
+
+
+jdk1.7  ConcurrentHashMap
+结构：segment[]:分段数组
+HashEntry[]:元数据数组
+1.构造方法
+public ConcurrentHashMap （int initialCapacity, float loadFactor, int concurrencyLevel）
+initialCapacity：初始化容积，HashEntry[]长度，
+loadFactor：加载因子，
+concurrencyLevel：并发级别（分段数）
+	实际值：比传入值大的最小的2的幂次方（计算方式：while循环+左移）
+	-最大为2的16次方
+
+计算指标：ssize-分段数组长度（segment[]长度）
+cap-单个分段内，hashEntry数组长度
+
+
+
+扩容：局部扩容，segment数据下标内的HashEntry数组扩容
+
+
+2.put方法
+	key，value不能为空
+	
+	确定segment数组位置：hash 高位 & (segment.length -1)
+	确定HashEntry数组位置:hase 低位 & (hashEntry.length-1)
+	
+	
+	Integer.numberOfLeadingZeros(int i)  返回1前面0的个数
+	a << (31-Integer.numberOfLeadingZeros(b));
+	a * b;
+	两个相等
+	
+锁 ReentrantLock799ioil.
+put和remove加锁，get不加锁
+	segment对象锁，找到对应segment位置后，获取segment锁
+	
+	
+1.8HashMap
+put方法：
+	1）table为空，扩容
+	2）hash & (length -1)计算下标，
+		A.如果下标元素为空，
+			p=tab[i = (length-1) & hash]新建元素,
+				tab[i]=newNode(hase,key, value, null);
+		B.不为空，第一个元素与插入key相等
+			（p.hash = hash&& (p.key == key || equals)）,则e = p;
+				如果为红黑树，放在树里；
+				不是，遍历链表
+					for(int binCount=0;;++binCount){
+						if((e = p.next) == null){
+							p.next = newNode（hase,key, value, null）;
+							if(binCount >= TREEIFY_THRESHOLD-1)
+								treeifyBin(tab, hash);
+							break;
+						}
+						if(e.hash == hash &&
+                        ((k = e.key) == key || (key != null && key.equals(k))))
+                        break;
+						p = e;
+					}
+				
+
+
+
 
 
