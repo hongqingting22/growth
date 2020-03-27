@@ -775,7 +775,53 @@ volatile底层实现原理：
 volatile可以保证可见性和有序性，无法保证原子性
 
 
+垃圾回收：
+垃圾回收算法：
+	1.引用计数法  Reference Count
+	2.Root Searching 根可达搜索
+		可以作为GC roots的对象：jvm栈内的引用，本地栈内的引用
 
+Mark-Sweep 标记-清理算法
+Copying 复制算法  
+Mark-Compact 标记-压缩
+
+对象分配流程：
+	1.根据逃逸分析，确定对象能否分配在栈上，如果不能，到2；（开启逃逸分析和标量替换）
+	2.如果tlab_top + size <= tlab_end,则分配到TLAB，并增加tlab_top的值，否则到3；
+	3.如果eden_top + size <= eden_end,则分配在Eden区，否则到4；
+	4.进行一次Young GC,如果空间足够，则分配到Eden，否则到5；
+	5.分配到老年代；
+	
+	逃逸分析：对象逃逸不出当前线程或方法
+	标量替换：允许对象被打散分配在栈上，比如，一个对象有两个字段，将两个字段作为局部变量来分配空间。
+
+垃圾收集器 Garbage Collectors	
+	Serial：年轻代   单线程垃圾收集器
+	SerialOld: 老年代  单线程垃圾收集器
+	Parallel Scavenge:年轻代 多线程垃圾收集器
+	Parallel Old:老年代 多线程垃圾收集器
+	ParNew：年轻代 配合CMS
+	CMS：老年代  初始标记-并发标记-重新标记-并发清理---
+		初始标记和重新标记需要STW，并发标记<不需要STW>；
+		
+		初始标记：只标记GC Roots对象  耗时短
+		并发标记：从初始标记标记到的对象开始搜索，标记为可达对象； 耗时长
+			将在并发标记过程中，刚从年轻代到老年代的、直接进入老年代的和引用对象发生变化的，
+			都标记为dirty，这些对象在重新标记阶段会被扫描。
+			
+			三色标记法：
+			白色：未被标记到的  被回收
+			灰色：正在被搜索的
+			黑色：被搜索过的，表示可达  不会被回收
+		重新标记：对dirty对象重新标记；  耗时短
+	G1:（Garbage First）逻辑分代，物理上不分区   分Region
+		
+	ZGC
+	Shenandoah
+	
+	Epsilon
+	
+		
 	
 
 	
