@@ -4,21 +4,38 @@
 	3）扩展性 消费过程独立，同一topic的数据可以被多个消费者组消费
 	4）消峰 
 	5）可恢复性 消费进程挂机后，加入队列的消息仍然可以在系统恢复后被处理
-	6）顺序保证  kafka保证在统一partition中的消息有序
+	6）顺序保证  kafka保证在同一partition中的消息有序
 	7）缓冲 
 	8）异步通信
 
 2.kafka几个名词
 	1）producer  消息路由：
 					发布者（生产者）可以指定消息的key，Producer会根据key与partition机制来判断发送到哪个partition。
-					Partition机制可以在partition.class这个参数来指定，该class必须实现kafka.producer.Partitioner接口。
-	2）topic	 消息类别 可以被不同消费者组消费
-	3）partition 分区 一个topic可以有一个或多个分区，有多个分区就可以启用多个消费者进行消费
+					Partition机制可以在partition.class这个参数来指定，
+					该class必须实现kafka.producer.Partitioner接口。
+				
+				类型：
+				Sync Producer 同步生产者 发送消息等待返回，失败重发，默认重试3次，可以指定时间间隔
+				
+				Async Prodecer 异步生产者 批量发送消息到队列中
+							
+	2）topic	 消息类别 同一个topic的消息可以分布在一个或多个broker上，可以被不同消费者组消费
+	3）partition 分区 一个topic可以有一个或多个分区（partition），有多个分区就可以启用多个消费者进行消费
 					每个分区对应一个文件夹，存储所有消息和索引。
+					一个partition包含多个segment，一个segment对应一个文件，
+						segment由一个个不可变的记录组成,记录被append到segment上，不会被单独删除或修改。	
 					kafka集群会保留所有消息，无论消费与否。
-					由于磁盘限制，可以设置不同的策略删除数据：一基于时间，二基于partition文件大小。
+					由于磁盘限制，可以设置不同的策略删除数据：
+						一基于时间，默认168小时，可以配置；
+						二基于partition文件大小。
+						清楚过期日志时，直接删除一个或者多个segment；
 					可在$KAFKA_HOME/config/server.properties中配置
 					kafka读取某一条消息的时间复杂度为O(1),与文件大小无关。
+					
+					partition方法：
+						可自定义方式实现消息分区，实现Partitioner的partition方法。
+						1）hashPartitioner  消息主键的key做hash，对partition分区个数取模
+						2）round Robin  轮询
 					
 	4）broker
 	5）consumer    记录偏移量 offset
@@ -30,4 +47,182 @@
 	At most once :可能会丢失，但绝不会重复发送；
 	At least once：消息不会丢失，但是可能会重复发送；
 	Exactly once：每条消息肯定会被传输且仅会被传输一次。
+	
+	
+4.kafka架构
+	producer  push消息到broker
+		0.8之后，初始化producer时，指定一个或者多个broker的地址，
+		只要连接到一个broker，就可以获取整个集群列表，producer可以获取topic信息--partition信息。
+		
+		刷新元信息：1）发送到broker信息失败时
+					2）定时刷新
+	broker
+	
+	consumer  从broker pull数据  
+	
+
+5.CAP理论
+	Consistency  一致性
+		1）某个节点的写操作 对后面通过其他节点的读操作可见
+		2）如果更新数据后，并发访问的情况下立即感知更新，称为强一致性
+		3）如果允许之后部分或全部感知不到该更新，称为弱一致性
+		4）之后一段时间后，一定可以感知到该更新，称为最终一致性
+	
+	Availability  可用性
+		任何一个没有发生故障的节点必须在有限时间内返回合理的结果
+	
+	Partition Tolerance 分区容错性
+		部分节点宕机或无法与其他节点通信时，各分区还可以保持分布式系统的功能
+	
+	分布式系统中，一致性，可用性，分区容忍性最多可同时满足两个
+	一般分区容忍性要求有保障，
+	
+6.Replica 副本
+	不对外提供服务，当leader宕机时，副本可以升级为leader。
+	topic的replication-factor为n时，表示每个partition都会有n个副本。
+	每个副本均匀分布在不同的broker上，且分区和副本不在同一个broker上
+	
+	副本同步数据：副本周期性的从leader中pull数据
+	
+		同步复制和异步复制
+		同步复制：所有副本都拿到消息后，再commit  保证了一致性，可用性不高；
+		异步复制：leader拿到消息后，直接commit    
+		
+	kafka的消息确认机制：ISR
+		1）leader会维护一个与其基本保持同步的副本列表，成为ISR(in-sync Replica)
+		2）如果发现某个副本落后太多，或者超过一定时间未发起复制请求，则leader将它从ISR中移除；
+		3）当ISR中所有Replica都向leader发送ACK时，leader即commit
+		
+		consumer只能读取到leader已提交的数据。
+		
+	commit策略：
+		Server配置： 
+			replica.lag.time.max.ms = 10000  多长时间后仍未发起复制请求，将副本移除
+			replica.lag.max.messages = 4000 落后超过多少时，将副本移除；小于该值时将副本加入ISR。
+		Topic配置：
+			min.insync.replicas = 1 保证最小的副本
+		Producer配置：
+			request.required.acks = 0  0表示不等待leader返回ack，继续发送消息
+										1（默认）表示要等待，leader数据写入成功则返回ack，
+											如果follower同步成功之前，leader宕机，将造成数据丢失
+										-1表示ISR中所有返回ack时，才返回消息给producer
+										
+	broker可能造成数据丢失：
+		比如leader中接收到了3条消息，
+			A副本pull到2条消息,B副本pull到1条消息，
+			leader会commit1条消息，此时leader宕机。
+			A副本升级为leader，B副本同步到2消息；
+			此时原leader重启后只能找到已提交的数据，因此会造成第3条消息的丢失。
+			
+		但是由于3消息未返回给producer确认，producer会根据自己的机制重发。
+		
+	因此kafka保证的数据顺序，不是发送时的顺序，而是提交数据时的顺序。
+	
+	如果处理Replica全部宕机？
+		两种方案：
+		1）等待ISR中任意一个Replica恢复，选择其为leader
+			优点：保证所有已被提交的数据正常被消费；
+			缺点：等待时间可能会比较长
+				若ISR中所有Replica都无法恢复，则该partition将用不可用；
+		2）（默认）选择第一个恢复的Replica为新的leader，无论他是否在ISR中
+			优点：等待时间段，可用性高
+			缺点：如果第一个恢复的不是ISR中的Replica，
+				由于它并未包含所有已提交的数据，会造成数据丢失。
+	
+7.Zookeeper
+	集群包含一个leader和多个follower
+	所有follower都可提供读操作
+	所有写操作都会forward到leader
+	client和server间通过NIO通信
+	全局串行化写操作
+	保证统一客户端指令被FIFO执行
+
+	广播模式：
+		1）leader将所有更新，顺序发送给所有的follower；（每个更新都有一个递增的id，proposal ID）
+		2）follower收到消息后，将更新写入磁盘，写入成功后返回ACK给leader
+		3）leader收到半数以上对改更新的ACK后，即向所有的follower发送commit消息，并在本地commit。
+	
+	基本操作
+		四种节点类型：永久/临时，顺序/非顺序 
+			临时节点重启后不存在
+			PERSIST
+			PERSIST_SEQUENTIAL
+			EPHEMERAL
+			EPHEMERAL_SEQUENTIAL
+		可注册Watch(监听)操作：
+			Created event
+			deleted event
+			Changed event
+			Child event
+		Watch特征：
+			先得到通知后得到数据
+			被fire后不再Watch后续变化
+			
+	kafka基于Zk的leader Election
+		抢注leader节点-非公平模式
+		1）创建leader父节点，如：/chroot,为永久的（persist）
+		2）各客户端通过在chroot节点下创建leader节点，
+			如：/chroot/leader来竞争leader,该节点为临时的（ephemeral）
+		3）若某客户端创建成功，则竞选为leader
+		4）若失败，则在leader节点上注册exist的watch(监听)，一旦该节点被删除可获得通知；
+		5）leader可通过删除leader节点放弃leader
+		6）如果leader宕机，由于节点为临时的，节点自动删除。  
+			其他客户端由于在节点上创建了监听，可得到通知，参与下一轮竞选。
+			
+		先到先得，后者监听前者-公平模式
+		1）创建leader父节点，如：/chroot,为永久节点
+		2）各客户端通过在chroot节点下创建leader节点，
+			如：/chroot/leader来竞争leader，该节点为临时有序节点（EPHEMERAL_SEQUECTIAL）
+		3）各客户端通过getChildren方法获取/chroot节点的子节点，
+			如果注册的节点是所有子节点中最小的，则当前节点竞选为leader节点；
+		4）否则，在前面一个节点上注册watch，一旦前者被删除，他将得到通知，返回步骤3；
+		
+	0.8.2之后
+	基于Controller的leader Election
+	
+	
+8.Consumer
+	通过pull从broker消费数据
+	优势：可以根据实际的消费能力获取相应量的数据
+	
+	consumer将从partition中读取的最后一条消息的offset存于Zookeeper中
+		（0.8.2开始，支持将offset存于Zookeeper和专用的kafka Topic中 ）
+		offset存在kafka的topic中是经过压缩的，相同key只保留最后一个记录。
+	Consumer Group是集群唯一的，
+		一个consumer group 可以消费多个topic消息；
+		同一个topic消息可以被多个consumer group消费；
+		每一条消息在一个consumer group中只会被一个consumer消费；
+		每一个partition在一个consumer group内之后会一个consumer消费；
+	
+	
+	Consumer启动以及Rebalance流程
+		1）启动时将ID注册到consumer group下，在zookeeper路径为
+			consumers/[consumer group]/ids/[consumer_id]
+		2）在/consumer/[consumer group]/ids上注册watch   监听消费者增减，触发reblance
+		3）在/brokers/ids上注册watch  监听partition可用性
+		4）如果consumer是通过filter(黑白名单)创建消息流，则也要在/brokers/topics上创建watch
+		5）强制自己在consumer group内启动rebalance
+		
+	Rebalance算法：
+		1）将目标topic下的所有partition排序，存于P T
+		2）将consumer group下所有consumer排序，存于 C G,第i个consumer标记为Ci
+		3）N = size(P T)/size(C G),向上取整
+		4）解除Ci对原来分配的partition的消费权
+		5）将第i*N到（i+1）*N -1个partition分配给Ci
+		
+	Offset管理
+		自动管理：
+			auto.commit.enable = true
+			auto.commit.interval.ms = 60*1000   每60秒钟自动提交一次
+		手动管理：
+			1)设置自动提交为false
+				auto.commit.enable = false
+			2)ConsumerConnector.commitOffsets(); 
+		
+	
+	
+	
+	kafka消息的顺序
+		在同一个partition内保证顺序消费，不同的partition不能保证顺序
+		
 			
