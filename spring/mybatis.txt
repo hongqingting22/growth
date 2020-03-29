@@ -1,0 +1,30 @@
+1.mybatis获取数据源
+	sqlSessionFactoryBuilder.build
+		XmlConfigBuilder.parse
+			XmlConfigBuilder.environmentsElement
+				Configuration.setEnvironment
+
+2.获取执行语句
+	
+	
+	mybatis加载mappers的方式：
+		package 优先级最高
+		resources
+		url
+		class
+		
+3.执行(jdbc原理)
+
+	Connection
+	PrepareStatement
+	ResultSet
+
+
+4.ORM  Object RelationShip Mapping  对象关系映射
+	jdbcTypes
+	classNames
+	columnNames
+	
+5.sqlSession是线程安全的么？
+	不是
+	
