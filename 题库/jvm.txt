@@ -172,7 +172,30 @@ JVM课程学习
 	强引用，软引用，弱引用，虚引用
 	强引用： 变量 = new对象  不会被垃圾回收
 	软引用：new SoftReference<对象>  使用softReference包裹，  垃圾回收后内存仍然不够时，会被回收
-	弱引用：new WeakReference<对象>  会被回收
+	弱引用：new WeakReference<对象>  垃圾回收时会被回收
+		ThreadLocal:线程本地变量，只有当前线程可以读取到自己ThreadLocal中的值
+			threadlocal.set(value)
+				Thread t = Thread.currentThread();
+				ThreadLocalMap map = getMap(t);//线程对象包含一个成员变量：ThreadLocalMap
+				if(map != null){
+					map.set(this, value);//以当前对象（threadLocal）为键，value为值，存入ThreadLocalMap
+				}else{
+					createMap(t, value);
+				}
+			
+			Map中的Entry对象继承的是WeakReference
+				static class Entry extends WeakReference<ThreadLocal<?>>{
+					Object value;
+					Entry<ThreadLocal<?> k,Object v){
+						super(k);//键是弱引用
+						value = v;
+					}
+				}
+				
+			内存泄漏问题：
+				thread中创建了threadLocal对象
+				threadLocal设置了key，value键值对
+				键值对放在thread中  
 	虚引用:PhantomReference
 
 finalize方法
@@ -823,10 +846,57 @@ Mark-Compact 标记-压缩
 	
 		
 	
-
+线程模型：
+	用户线程（ULT）：用户程序实现，不依赖操作系统核心，
+		应用提供创建、同步、调度和管理线程的函数来控制用户线程。
+		不需要用户态/核心态切换，速度快。
 	
+	内核线程（KLT）：系统内核管理线程，内核保存线程的状态和上下文信息。
+		线程阻塞不会引起进程阻塞。
+		
+	JVM使用的是KLT模型。
 	
-  
+	线程的创建和销毁是相对偏重且耗资源的操作，java线程依赖于内核线程，创建线程需要进行操作系统状态切换。
+	
+	线程池：
+		ThreadPoolExecutor
+		核心线程数
+		最大线程数
+		最长空闲时间
+		时间单位
+		阻塞排队队列  任意时刻，不管并发多高，永远只有一个线程能够进行队列的入队和除对操作
+				
+		拒绝策略
+			抛异常 AbortPolicy（默认）
+			丢弃最早线程  DisCardOldestPolicy	
+			直接丢弃  Discardpolicy 
+			调用者执行策略  CallerRunsPolicy
+			自定义
+		execute() 执行
+		shutdown() 不接受新任务，执行完队列里的任务
+		shutdownNow() 不接受新任务，不执行队列里的任务，中断正在处理的任务
+		
+		五种状态：
+			Running  能接受新任务以及处理已添加的任务
+			shutdown 不接受新任务，可以处理之前的任务
+			stop  不接受新任务，不处理老任务，中断正在处理的任务
+			tidying 所有任务已经终止，ctl记录的任务数量为0，ctl负责记录线程池运行状态和活动线程数量
+			terminated 线程池彻底终止
+			
+		ctl  AutomicInteger
+		32位
+		高三位保存状态，低29位保存线程数
+		高位：
+			-1 << COUNT_BITS  111 running状态
+			0 << COUNT_BITS   000 shutdown
+			1 << COUNT_BITS   001 stop
+			2 << COUNT_BITS   002 Tidying
+			3 << COUNT_BITS   003 terminated
+		
+		
+		
+		
+	
 	
 	
 	

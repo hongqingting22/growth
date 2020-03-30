@@ -1,0 +1,565 @@
+1.es目录结构
+	bin
+	config  配置文件   elasticsearch.yml
+	data  数据文件
+	logs  
+	plugins  插件
+
+2.核心概念
+	index  索引  库
+	type   类型  表
+		5.0 一个索引可以对应多个type
+		6.0 一个索引只能对应一个type
+		7.0 移除type概念
+	mapping  映射  表结构 定义字段和类型
+	document 文档  一条记录
+	column 字段
+	节点  一台机器或一个进程
+	集群  一个节点或多个节点组成
+	分片和副本 shards
+		副本是分片的副本，分片有主分片和副本分片之分；
+		一个index在物理上被分布在多个主分片上，每个分片只存储部分数据；
+		每个主分片有多个副本，副本分片是主分片的复制。（主分片宕机后，可以替代主分片）
+		
+3.Resultful风格
+	资源是resultful风格的核心
+	HEAD  只获取资源的头部信息
+	GET
+	POST  更新资源，或创建不指定id的资源
+	PUT	  新增或修改指定id的资源
+	DELETE
+	
+	curl -X GET "http://localhost:9200"
+	
+	curl -X PUT "http://localhost:9200/index/_doc/id" -H 'Content-Type:application/json' -d '
+	{
+		"user":"xiaoming",
+		"msg":"ssss"
+	}
+	'
+	
+4.mapping
+	创建索引mapping
+		curl -X PUT "localhost:9200/nba/_mapping" -H 'Content-Type:application/json' -d '
+		{
+			"properties":{
+				"name":{
+					"type":"text"
+				},
+				"no":{
+					"type":"keyword"
+				}
+			}
+		}	
+		'
+	查询索引mapping
+		curl -X GET "http://localhost:9200/nba/_mapping"
+		多个索引以逗号隔开
+		所有索引信息：
+		curl -X GET "http://localhost:9200/_all/_mapping"
+	修改索引mapping（只能增加字段，不能修改字段类型）
+		curl -X POST "localhost:9200/nba/_mapping" -H 'Content-Type:application/json' -d '
+		{
+			"properties":{
+				"name":{
+					"type":"text"
+				},
+				"no":{
+					"type":"keyword"
+				},
+				"team":{
+					"type":"keyword"
+				}
+			}
+		}	
+		'
+		
+		text类型会被分词 ，keyword不会被分词
+
+5.document
+	插入数据
+		curl -X PUT "http://localhost:9200/nba/_doc/id" -H 'Content-Type:application/json' -d '
+		{
+			"name":"kebi",
+			"no":"24"
+		}
+		'
+		指定id，PUT
+		不指定id要是用POST,会自动生成id
+		
+		如果索引不存在，可以自动创建索引（需要配置）auto_create_index:true
+			curl -X PUT "http://localhost:9200/_cluster/settings" -H 'Content-Type:application/json' -d '
+			{
+				"action.auto_create_index":"true"
+			}
+			'
+		指定为新增，不覆盖原有数据op_type=create
+			curl -X PUT "http://localhost:9200/nba/_doc/id?op_type=create" -H 'Content-Type:application/json' -d '
+			{
+				"name":"kebi",
+				"no":"24"
+			}
+			'
+	查看
+		curl -X GET "http://localhost:9200/nba/_doc/id
+		查看多个
+		curl -X GET "http://localhost:9200/nba/_mget -H 'Content-Type:application/json' -d '
+			{
+				ids:["1","2"]
+			}
+			'
+	
+	修改
+		curl -X POST "http://localhost:9200/nba/_update/id" -H 'Content-Type:application/json' -d '
+		{
+			"name":"kebi",
+			"no":"24"
+		}
+		'
+	
+6.分词器
+	standard analyze  大写转换为消息，对中文单字分割
+	simple   大写转换为消息，不索引数字
+	whitespace 只通过空格分开，保留符号
+	stop  simple加上，stopwords,停止词过滤掉
+	english 
+	pattern  正则
+	
+	查看分词器分词的结果
+		curl -X POST "http://localhost:9200/_analyze" -H 'Content-Type:application/json' -d '
+		{
+			"analyzer":"standard",
+			"text":"xiaoming is a good person"
+		}
+		'
+		
+	中文分词器
+		analysis-smartcn 对中文词语分词
+		ik_max_wordik分词器  对中文词语分词,一个词语可能会被分为多个词语
+	
+7.常见字段类型
+	字符串
+		text 用于全文索引，通过分词器分词
+		keyword 部分词，只能搜索完整的值   
+	数值类型
+		long，integer，short，byte，double，float，half_float,scaled_float
+	布尔类型  boolean
+	二进制 binary
+	范围类型
+		integer_range,float_range,long,double,date
+		如：
+		age:
+		{
+			"gte":20,
+			"lte":40
+		}
+		搜索："term":{"age":23}
+	date
+	
+	复杂数据类型
+		1)数组Array
+		如："num":["one"，"two"]
+			"user":[{"name":"aa","age":18},{"name":"bb","age":20}]
+			
+		2)对象类型
+			"address":{
+				"region":"China",
+				"location":{
+					"city":"zhengzhou",
+					"province":"henan"
+				}
+			}
+			查询：address.region
+				  address.location.city
+		3)ip类型
+			可以搜索ip段
+			"ip_address：{
+				"type":"ip"
+			}
+			搜索："ip_address":"192.168.0.0/16" 可以搜索到192.168.0.0~192.168.255.255
+			
+8.term查询
+	精准匹配
+		{
+			"query":{
+				"term":{
+					"no":"23"
+				}
+			}
+		}
+	查询非空 exist
+		查询name字段不为空的数据
+		{
+			"query":{
+				"exists":{
+					"field":"name"
+				}
+			}
+		}
+	prefix 前缀查询  查询字段需要为keyword类型
+		{
+			"query":{
+				"prefix":{
+					"name":"li"
+				}
+			}
+		}
+	WildCard query 通配符查询 查询字段需要为keyword类型
+		{
+			"query":{
+				"term":{
+					"name":"*xiao*"
+				}
+			}
+		}
+	regexp 正则查询 查询字段需要为keyword类型
+		{
+			"query":{
+				"regexp":{
+					"name":"xia.*"
+				}
+			}
+		}
+	id查询
+		{
+			"query":{
+				"ids":{
+					"values":[1,2]
+				}
+			}
+		}
+
+9.范围查询
+	{
+		"query":{
+			"range":{
+				"age":{
+					"gte":20,
+					"lte":30
+				}
+			}
+		}
+	}
+	date类型
+	{
+		"query":{
+			"range":{
+				"birthday":{
+					"gte":"01/01/1999",
+					"lte":"2020",
+					"format":"dd/MM/yyyy||yyyy"
+				}
+			}
+		}
+	}
+		
+10.布尔查询
+	must:
+		{
+			"query":{
+				"bool":{
+					"must":[
+						{
+							"match":{
+								"name":"xiaoming"
+							}
+						}
+					],
+					"must_not":[
+						{
+							"match":{
+								"age":13
+							}
+						}
+					],
+					"should":[
+						{
+							"match":{
+								"high":170
+							}
+						}
+					],
+					"mininum_should_match":1//最小匹配精度，与should搭配使用
+				}
+			}
+		}
+	filter
+	must_not
+	should
+
+11.排序
+	{
+		"query":{
+			"range":{
+				"birthday":{
+					"gte":"01/01/1999",
+					"lte":"2020",
+					"format":"dd/MM/yyyy||yyyy"
+				}
+			}
+		}，
+		sort:[
+			{
+				"age":{"order":"desc"}
+			},
+			{
+				"high":{"order":"desc"}
+			}
+		],
+		from:0,
+		to:100
+	}
+	
+12.聚合查询
+	avg，sum，count
+	{
+		"query":{
+			"range":{
+				"birthday":{
+					"gte":"01/01/1999",
+					"lte":"2020",
+					"format":"dd/MM/yyyy||yyyy"
+				}
+			}
+		},
+		"aggs":{
+			"avgAge":{//聚合函数名字，自定义
+				"avg":{//函数
+					"field":"age"
+				}
+			}
+		}
+	}
+	
+	去重 cardinality
+		去重查询
+		{
+			"query":{
+				"range":{
+					"birthday":{
+						"gte":"01/01/1999",
+						"lte":"2020",
+						"format":"dd/MM/yyyy||yyyy"
+					}
+				}
+			},
+			"aggs":{
+				"countAge":{//聚合函数名字，自定义
+					"cardinality":{//函数
+						"field":"age"
+					}
+				}
+			}
+		}
+	百分位分组
+		{
+			"query":{
+				"range":{
+					"birthday":{
+						"gte":"01/01/1999",
+						"lte":"2020",
+						"format":"dd/MM/yyyy||yyyy"
+					}
+				}
+			},
+			"aggs":{
+				"percentAge":{//聚合函数名字，自定义
+					"percentiles":{//百分位函数，默认[0,5,25,50,75,95,100]
+						"field":"age",
+						"percents":[//自定义
+							20,50,75
+						]
+					}
+				}
+			}
+		}
+13.桶聚合
+
+	{
+		"query":{
+			"range":{
+				"birthday":{
+					"gte":"01/01/1999",
+					"lte":"2020",
+					"format":"dd/MM/yyyy||yyyy"
+				}
+			}
+		},
+		"aggs":{
+			"aggsAge":{//聚合函数名字，自定义
+				"terms":{
+					"field":"team",//分组字段
+					//指定分组列表
+					"include":["Laker","Rocket"],
+					"size":10//top
+					"order":{
+						"_key":"desc"//对key排序  对数量排序（"_count":"desc"）
+						//自定义排序字段
+						"avgAge":"asc"
+					}
+				},
+				"aggs":{
+					"avgAge":{//自定义排序字段名称
+						"avg":{
+							"field":"age"
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	范围分组聚合
+	{
+		"query":{
+			"range":{
+				"birthday":{
+					"gte":"01/01/1999",
+					"lte":"2020",
+					"format":"dd/MM/yyyy||yyyy"
+				}
+			}
+		},
+		"aggs":{
+			"ageRange":{//聚合函数名字，自定义
+				"range":{
+					"field":"age",//分组字段
+					"ranges":[
+						{
+							"to"：10,
+							"key"："A"//别名
+						},{
+							"from":10
+							"to"：20,
+							"key"："B"//别名
+						}
+					]
+					"order":{
+						"_key":"desc"//对key排序  对数量排序（"_count":"desc"）
+						//自定义排序字段
+						"avgAge":"asc"
+					}
+				},
+				"aggs":{
+					"avgAge":{//自定义排序字段名称
+						"avg":{
+							"field":"age"
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	时间分组聚合
+		date_histogram
+		calendar_interval:  year,quarter（季度），month，week，day，hour，minite，second
+		"aggs":{
+			"birthdayAggs":{
+				"date_histogram":{
+					"field":"birthday",//分组字段
+					"format":"yyyy",
+					"interval":"year"
+				}
+			}
+		}
+		
+14.query_string
+	单字段
+		{
+			"query":{
+				"query_string":{
+					"field":"name",
+					"query":"A OR B"
+				}
+			}
+		}
+	多字段
+		{
+		"query":{
+			"query_string":{
+				"fields":[
+					"name","realname"
+				],
+				"query":"A OR B"
+			}
+		}
+	}
+
+15.别名
+	aliases
+	修改别名	
+		POST /_aliases
+		{
+			"actions":[
+				{
+					"remove":{//删除别名
+						"index":"nba",
+						"alias":"nba_v1.0"
+					}
+				},
+				{
+					"add":{//新增别名
+						"index":"nba",
+						"alias":"nba_v2.0"
+					}
+				},
+				{
+					"add":{//新增别名,不会覆盖，多个别名
+						"index":"nba",
+						"alias":"nba_v3.0"
+					}
+				}
+			]
+		}
+	通过别名写索引信息
+		把index名改为别名
+		
+16.refresh
+	添加语句后添加  ?refresh
+	
+	添加成功时，只是放在buffer缓冲区，需要刷新后才可以查询到
+	默认自动刷新时间是1秒钟，可配置  
+	refresh_interval:5s 5秒刷新  -1：表示不会自动刷新
+	
+17.词条建议
+	suggest_mode:建议模式：
+		missing:仅在搜索的词项在索引中不存在时才提供建议
+		popular：仅建议文档频率比搜索词项高的词
+		always：总是提供匹配的建议词
+	{
+		"suggest":{
+			"my_suggestion":{
+				"text":"jams",
+				"term":{
+					"suggest_mode":"missing",
+					"field":"name"
+				}
+			}
+		}
+	}
+	
+	短语建议：
+		在term基础上，考量多个term之间的关联
+		{
+			"suggest":{
+				"my_suggestion":{
+					"text":"jams",
+					"phrase":{
+						"field":"name"
+					}
+				}
+			}
+		}
+	完成建议
+		completion  单词自动补全
+		{
+			"suggest":{
+				"my_suggestion":{
+					"text":"jams",
+					"completion":{
+						"field":"name"
+					}
+				}
+			}
+		}
