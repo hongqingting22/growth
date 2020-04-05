@@ -9,15 +9,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>springcloud_eureka</artifactId>
+    <artifactId>springcloud_zuul</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
-            <version>2.2.2.RELEASE</version>
+            <artifactId>spring-cloud-starter-netflix-zuul</artifactId>
         </dependency>
-
     </dependencies>
+
 
 </project>

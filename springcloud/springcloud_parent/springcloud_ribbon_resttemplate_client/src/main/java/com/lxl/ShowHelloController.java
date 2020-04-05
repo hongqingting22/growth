@@ -1,5 +1,6 @@
 package com.lxl;
 
+import com.netflix.ribbon.proxy.annotation.Hystrix;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
@@ -15,6 +16,7 @@ public class ShowHelloController {
     private LoadBalancerClient loadBalancerClient;
 
     @RequestMapping("/hello")
+    @Hystrix(fallbackHandler = {})
     public String showHello(String name){
         /*String url = "http://localhost:8989/hello/hello?name=" + name;
         RestTemplate restTemplate = new RestTemplate();
@@ -22,6 +24,7 @@ public class ShowHelloController {
         System.out.println(forObject);
         return forObject;*/
 
+        //choose后面是应用名称  spring.application.name
         ServiceInstance choose = loadBalancerClient.choose("HELLO-SERVICE");
         String host = choose.getHost();
         int port = choose.getPort();
