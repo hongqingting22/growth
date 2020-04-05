@@ -1,0 +1,12 @@
+1.SpringCloud 
+	基于netfilx的封装
+
+2.架构
+	注册中心  Eureka Server 注册中心
+			  Eureka Client 所有注册在Eureka Server中的服务，可能为服务提供者或调用者
+	ribbon    负载均衡器
+	
+
+3.Eureka注册中心
+	
+	

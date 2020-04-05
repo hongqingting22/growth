@@ -1,10 +1,12 @@
 package com.lxl.lock.AQS;
 
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Demo1 {
     private static int m = 0;
     private static ReentrantLock lock = new ReentrantLock();
+    Condition condition = lock.newCondition();
 
     public static void method1() throws Exception{
         Thread[] threads = new Thread[100];

@@ -9,9 +9,8 @@ public class StreamFile {
 
     @Test
     public void test() throws Exception{
-        Files.lines(Paths.get("C:\\Users\\lenovo\\Desktop\\newh5.txt")).filter(a ->{
-            String[] s = a.split("    ");
-            return
-        }).forEach(System.out::println);
+//        Files.lines(Paths.get("C:\\Users\\lenovo\\Desktop\\newh5.txt")).filter(a ->{
+//            String[] s = a.split("    ");
+//        }).forEach(System.out::println);
     }
 }
