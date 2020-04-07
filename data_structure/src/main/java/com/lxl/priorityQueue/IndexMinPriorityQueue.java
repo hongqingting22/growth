@@ -32,7 +32,7 @@ public class IndexMinPriorityQueue<T extends Comparable> {
     }
 
     public boolean less(int i ,int j){
-        return items[pq[i]].compareTo(items[pq[j]]) < 0;
+        return items[pq[i]].compareTo(items[qp[j]]) < 0;
     }
 
     public void exchange(int i , int j){
@@ -72,14 +72,71 @@ public class IndexMinPriorityQueue<T extends Comparable> {
         int i = minIndex();
         T item = items[i];
         //交换最小和最大索引的元素
-        exchange(i, N);
-        //删除pq中N位置的内容
-
+        exchange(1, N);
+        //删除qp中N位置的内容
+        qp[pq[N]] = -1;
+        //删除items中最大索引处的元素
+        items[i] = null;
+        //删除pq中最大索引处的内容
+        pq[N] = -1;
+        //最小元素下沉
+        sink(1);
         return item;
     }
 
+    public T delete(int i ){
+        //第i个元素对应的数组下标
+        int idx = qp[i];
+        T item = items[idx];
+        //交换pq中该元素与队列尾元素
+        exchange(idx, N);
+        //删除qp中N位置元素
+        qp[pq[N]] = -1;
+        //删除items中i位置元素
+        items[idx] = null;
+        //删除pq中N位置元素
+        pq[N] = -1;
+        //idx元素上浮后下沉
+        swim(idx);
+        sink(idx);
+
+        return item;
+    }
+    //修改i位置元素值
+    public void change(int i , T t){
+        int idx = qp[i];
+        items[idx] = t;
+
+        swim(idx);
+        sink(idx);
+    }
+
     public void swim(int i ){
+        while (i/2 >= 1){
+            if(less(i, i/2)){
+                exchange(i, i/2);
+                i /= 2;
+            }else{
+                break;
+            }
+        }
 
+    }
 
+    public void sink(int i){
+        while (2*i <= N){
+            int min;
+            if(2 * i + 1 <=N){
+                min = less(2*i, 2* i + 1) ? 2 * i : 2*i+1;
+            }else {
+                min = 2 * i;
+            }
+            if(less(i, min)){
+                exchange(i, min);
+                i = min;
+            }else{
+                break;
+            }
+        }
     }
 }
