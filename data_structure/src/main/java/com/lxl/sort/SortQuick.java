@@ -3,7 +3,7 @@ package com.lxl.sort;
 import java.util.Arrays;
 
 /**
- * 快速排序
+ * 快速排序 O(nlogn)
  *
  * 查找临界点
  */
