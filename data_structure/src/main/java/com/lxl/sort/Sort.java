@@ -138,8 +138,8 @@ public class Sort {
             list.toArray(arr);
 
             long start = System.currentTimeMillis();
-//            shellSort(arr);//27544
-            insertionSort(arr);
+            shellSort(arr);//27544
+//            insertionSort(arr);//23502
             System.out.println(System.currentTimeMillis() - start);
         } catch (Exception e) {
             e.printStackTrace();
