@@ -1,4 +1,4 @@
-package com.lxl.linear;
+package com.lxl.linear.linkList;
 
 /**
  * 约瑟夫问题

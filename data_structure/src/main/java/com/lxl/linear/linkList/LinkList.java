@@ -1,4 +1,4 @@
-package com.lxl.linear;
+package com.lxl.linear.linkList;
 
 import java.util.Iterator;
 

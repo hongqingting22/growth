@@ -1,4 +1,4 @@
-package com.lxl.linear;
+package com.lxl.linear.linkList;
 
 /**
  * 翻转链表
