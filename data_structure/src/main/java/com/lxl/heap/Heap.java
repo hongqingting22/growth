@@ -114,12 +114,19 @@ public class Heap<T extends Comparable>{
     public static void main(String[] args) {
         Heap<String> heap = new Heap<String>(4+1);
         heap.insert("A");
+        System.out.println(heap);
         heap.insert("B");
+        System.out.println(heap);
         heap.insert("C");
+        System.out.println(heap);
         heap.insert("D");
+        System.out.println(heap);
         heap.insert("E");
+        System.out.println(heap);
         heap.insert("F");
+        System.out.println(heap);
         heap.insert("G");
+        System.out.println(heap);
         heap.insert("H");
         System.out.println(heap);
 
