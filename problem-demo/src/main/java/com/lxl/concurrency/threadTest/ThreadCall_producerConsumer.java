@@ -1,7 +1,6 @@
-package com.lxl.threadTest;
+package com.lxl.concurrency.threadTest;
 
 import java.util.LinkedList;
-import java.util.List;
 
 public class ThreadCall_producerConsumer {
     private static int NUM = 1;

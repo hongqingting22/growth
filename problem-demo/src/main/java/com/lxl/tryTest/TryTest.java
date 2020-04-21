@@ -46,8 +46,10 @@ public class TryTest {
         List<Integer> test2 = test2();
         System.out.println(test2);
 
-        RetDto dto = test3();
+        TryTest tryTest = new TryTest();
+        RetDto dto = tryTest.test3();
         System.out.println(dto);
+
     }
 
     private static int test1() {
@@ -81,7 +83,7 @@ public class TryTest {
         return list;
     }
 
-    private static RetDto test3() {
+    private RetDto test3() {
         RetDto dto = new RetDto();
         try {
             dto.name = "try";
@@ -98,8 +100,7 @@ public class TryTest {
         }
 //        return dto;
     }
-
-   static class RetDto{
+    class RetDto{
         String name;
         int age;
 

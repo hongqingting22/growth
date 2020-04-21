@@ -1,4 +1,4 @@
-package com.lxl.threadTest;
+package com.lxl.concurrency.threadTest;
 
 public class ThreadCall_waitNotify {
 

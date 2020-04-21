@@ -1,0 +1,22 @@
+线程三个要素：
+
+原子性
+    基本数据类型的赋值操作保证原子性，long和double不是原子性的
+    int a = 10; //原子
+    int b = a;  //非原子性   read a , assign b
+    b++;        //非原子性   read b, add , assign b
+
+可见性
+    使用volatile
+
+有序性
+    happens-before relationship
+    一个线程内，按编写顺序执行  （最终一致性）
+    unlock必须发生在lock之后
+    volatile修饰的变量，对该变量的写操作先于对该变量的读操作
+    传递规则：操作A先于B，B先于C，则A先于C
+    线程启动规则：start方法先于线程的run方法
+    线程中断规则：interrupt发生在捕获动作之前
+    对象销毁规则：初始化必须发生在finalize之前
+    线程终结规则：所有操作必须发生在线程死亡之前
+

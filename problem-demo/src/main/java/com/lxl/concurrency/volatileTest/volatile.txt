@@ -1,0 +1,39 @@
+volatile关键字
+    可见性，有序性
+    1.保证不同线程间的可见性
+    2.禁止对其进行重排序，保证有序性
+    3.不保证原子性
+
+    共享数据不加volatile时，线程会从cpu本地缓存中获取值，
+        不对共享变量做修改操作时，不会从主缓存刷新数据；
+        当对共享数据有修改时，也会从主缓存刷新数据。
+
+解决线程间数据不一致：
+    1.总线加锁
+
+    2.高速缓存一致性协议(MESI)
+
+使用场景：
+    1.状态量标记
+        volatile Boolean flag = true;
+
+        public void run(){
+            while(flag){
+                //
+            }
+        }
+
+        public void close(){
+            flag = false;
+        }
+
+     2.屏障前后一致性
+        volatile boolean i；
+
+        obj = createObj();
+        int i =  false;
+
+        if(i == false){
+            useObj(obj);
+        }
+
