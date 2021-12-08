@@ -1,0 +1,196 @@
+es
+
+创建索引
+	curl -XPUT http://127.0.0.1:9200/shopping
+
+查看索引
+	curl -XGET http://127.0.0.1:9200/shopping
+	
+删除索引
+	curl -XDELETE http://127.0.0.1:9200/shopping
+
+创建文档
+	curl -XPOST http://127.0.0.1:9200/shopping/_doc/1001 -d '{"name":"xiaoming","age":20}'
+
+	curl -XPUT http://127.0.0.1:9200/shopping/_doc/1001 -d '{"name":"xiaoming","age":20}'
+
+	创建文档时不设置id，操作是非幂等的，不能使用PUT（除了POST之外的其他方法都是幂等的）；
+	创建文档时设置id，PUT，POST都可以。
+
+查询文档
+	全查询
+	curl -XGET http://127.0.0.1:9200/shopping/_search
+
+	主键查询
+	curl -XGET http://127.0.0.1:9200/shopping/_doc/1001
+
+修改文档
+	全量修改
+	curl -XPUT http://127.0.0.1:9200/shopping/_doc/1001 -d '{"name":"xiaoming","age":21}'
+	局部修改
+	curl -XPUT http://127.0.0.1:9200/shopping/_update/1001 -d '{"doc":{"age":22}}'
+
+删除文档
+	curl -XDELETE http://127.0.0.1:9200/shopping/_doc/1001
+	
+条件查询
+	curl -XGET http://127.0.0.1:9200/shopping/_search?q=name:xiaoming
+	
+	curl -XGET http://127.0.0.1:9200/shopping/_search -d '
+	{"query":{
+		"match":{
+			"name":"xiaoming"
+		}
+	}}'
+	
+	
+	分页查询：
+	curl -XGET http://127.0.0.1:9200/shopping/_search -d '
+	{
+		"query":{
+			"match":{
+				"name":"xiaoming"
+			}
+		},
+		"from":0,//首页
+		"size":3//每页3条
+	}'
+	
+	curl -XGET http://127.0.0.1:9200/shopping/_search -d '
+	{
+		"query":{
+			"match":{
+				"name":"xiaoming"
+			}
+		},
+		"from":3,//第二页的首条数据
+		"size":3
+	}'
+	
+	限制返回字段、查询结果排序
+	curl -XGET http://127.0.0.1:9200/shopping/_search -d '
+	{
+		"query":{
+			"match":{
+				"name":"xiaoming"
+			}
+		},
+		"from":3,//第二页的首条数据
+		"size":3，
+		"_source":[age],//限制返回结果
+		"sort":{//排序
+			"age":{
+				"order":"desc"
+			}
+		}
+	}'
+	
+多条件查询
+	AND查询
+	curl -XGET http://127.0.0.1:9200/shopping/_search -d '
+	{"query":{
+		"match":{
+			"bool":{
+				"must":[//并且
+					"match":{
+						"name":"xiaoming"
+					},
+					"match":{
+						"age":22
+					}
+				]
+			}
+			
+		}
+	}}'
+	
+	OR查询
+	curl -XGET http://127.0.0.1:9200/shopping/_search -d '
+	{"query":{
+		"match":{
+			"bool":{
+				"should":[//或者
+					"match":{
+						"name":"xiaoming"
+					},
+					"match":{
+						"name":"xiaohua"
+					}
+				]
+			}
+			
+		}
+	}}'
+	
+	范围查询
+	curl -XGET http://127.0.0.1:9200/shopping/_search -d '
+	{"query":{
+		"match":{
+			"bool":{
+				"should":[//或者
+					"match":{
+						"name":"xiaoming"
+					},
+					"match":{
+						"name":"xiaohua"
+					}
+				]，
+				"filter":{
+					"range":{//范围查询
+						"age":{
+							"gt":20
+						}
+					}
+				}
+			}
+			
+		}
+	}}'
+	
+	完全匹配(match_phrase)
+	curl -XGET http://127.0.0.1:9200/shopping/_search -d '
+	{"query":{
+		"match_phrase":{
+			"name":"xiaoming"
+		}
+	}}'
+	
+	高亮(highlight)
+	curl -XGET http://127.0.0.1:9200/shopping/_search -d '
+	{
+		"query":{
+			"match_phrase":{
+				"name":"xiaoming"
+			}
+		},
+		"highlight":{
+			"fileds":{
+				"name":{}
+			}
+		}
+	}'
+	
+	聚合查询
+	curl -XGET http://127.0.0.1:9200/shopping/_search -d '
+	{
+		"aggs":{//聚合操作
+			"age_group":{//分组名称，随意起名
+				"terms":{//分组
+					"filed":"age"//分组字段
+				}
+			}
+		},
+		"size":0//聚合统计时，size=0表示只返回统计数据，不需要原始数据
+	}'
+	
+	平均值
+	curl -XGET http://127.0.0.1:9200/shopping/_search -d '
+	{
+		"aggs":{//聚合操作
+			"age_avg":{//名称，随意起名
+				"avg":{//分组
+					"filed":"age"//分组字段
+				}
+			}
+		}
+	}'
