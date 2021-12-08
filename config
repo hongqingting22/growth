@@ -1,0 +1,6 @@
+Host github.com
+User lixl_email@163.com
+Hostname ssh.github.com
+PreferredAuthentications publickey
+IdentityFile ~/.ssh/id_rsa
+Post 443

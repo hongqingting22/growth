@@ -2,9 +2,11 @@ package com.lxl.string;
 
 import com.alibaba.fastjson.JSONObject;
 import org.junit.Test;
+import org.springframework.util.StringUtils;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +35,13 @@ public class StringDemo {
 //        System.out.println(actionVO);
 
 //        splits(",,1,");
-        test();
+//        test();
+
+/*            String msgId = "";
+            System.out.println( Optional.ofNullable(msgId).orElse(""));*/
+
+        Long aLong = ipLong("1.204.57.176");
+        System.out.println(aLong);
     }
 
     public static void test(){
@@ -41,6 +49,20 @@ public class StringDemo {
         boolean messyCode = isMessyCode(name);
         System.out.println(messyCode);
 
+    }
+
+    @Test
+    public void test1(){
+        String domain = "43243.sobot.com";
+        String email = domain.substring(0,domain.indexOf(".")) + "@support.sobot.com";
+        System.out.println(email);
+    }
+
+    @Test
+    public void test2(){
+        String answer = "fdasfdsafdsafdsf\nfdsafdsfsaf\n";
+        if(answer.endsWith("\n"))answer = answer.substring(0,answer.lastIndexOf("\n"));
+        System.out.println(answer);
     }
     public static boolean isMessyCode(String strName) {
         Pattern p = Pattern.compile("\\s*|\t*|\r*|\n*");
@@ -65,6 +87,13 @@ public class StringDemo {
         } else {
             return false;
         }
+    }
+
+    private static Long ipLong(String ip){
+        if(null == ip || ip.equals("0.0.0.0"))return null;
+        String[] split = ip.split("\\.");
+        Long ipLong = (Long.valueOf(split[0]))*(1<<24)+(Long.valueOf(split[1]))*(1<<16)+(Long.valueOf(split[2]))*(1<<8)+(Long.valueOf(split[3]));
+        return ipLong;
     }
 
     private static boolean isChinese(char c) {

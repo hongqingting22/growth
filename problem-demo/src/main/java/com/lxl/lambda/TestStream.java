@@ -205,4 +205,16 @@ public class TestStream {
     }
 
 
+    public static void main(String[] args) {
+        /*AA aa = new AA();
+        System.out.println(aa.aa == 2);
+        System.out.println(aa.aa.equals(2));*/
+        Integer aa = null;
+        System.out.println(1 == aa);
+    }
+
+}
+
+class AA{
+    Integer aa;
 }

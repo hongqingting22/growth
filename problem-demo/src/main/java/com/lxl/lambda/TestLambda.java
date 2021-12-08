@@ -1,7 +1,11 @@
 package com.lxl.lambda;
 
+import com.alibaba.fastjson.JSONObject;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -52,6 +56,23 @@ public class TestLambda {
         Integer name = stringIntegerIntegerBiFunction.apply("18", 20);
         System.out.println(name);
 
+    }
+    @Test
+    public void testMatch(){
+        String msgId = "aa";
+        boolean match = false;
+        List<String> undeliveredMsgs = new ArrayList<>();
+        Msg msg = new Msg();
+        msg.msgId = "aa";
+        msg.content = "ss";
+        undeliveredMsgs.add(JSONObject.toJSONString(msg));
+            match = undeliveredMsgs.stream().anyMatch(e -> msgId.equals(JSONObject.parseObject(e).getString("msgId")));
+        System.out.println(match);
+    }
+
+    class Msg{
+        String msgId;
+        String content;
     }
 }
 
